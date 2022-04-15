@@ -1,0 +1,3 @@
+appname: "j3n"
+output: ./dist/j3n
+disable_run: true
