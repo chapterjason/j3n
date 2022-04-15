@@ -19,56 +19,63 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package cmd
+
+package release
 
 import (
-	"os"
-
 	"github.com/go-git/go-git/v5"
-	"github.com/spf13/cobra"
 
-	"github.com/chapterjason/j3n/mod/release"
 	"github.com/chapterjason/j3n/mod/version"
 )
 
-// releaseCmd represents the release command
-var releaseCmd = &cobra.Command{
-	Use:   "release [version]",
-	Short: "Create a new release of a project",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		v, err := version.Parse(args[0])
-
-		if err != nil {
-			return err
-		}
-
-		wd, err := os.Getwd()
-
-		if err != nil {
-			return err
-		}
-
-		repo, err := git.PlainOpen(wd)
-
-		if err != nil {
-			return err
-		}
-
-		return release.Release(repo, v)
+/**
+Possible Json Config format:
+{
+	"hooks": {
+		"pre-release": [
+			[
+				"version:set",
+				{
+					"format": "{{VERSION}}"
+				}
+			],
+			[
+				"git:commit",
+				{
+					"message": "Update version for {{VERSION}}"
+				}
+	  		]
+		],
+		"post-release": [
+			[
+				"version:set",
+				{
+					"format": "{{VERSION}}"
+				}
+			],
+			[
+				"git:commit",
+				{
+					"message": "Bump version to {{VERSION}}"
+				}
+	  		]
+		],
 	},
 }
+*/
 
-func init() {
-	rootCmd.AddCommand(releaseCmd)
+func Patch(r *git.Repository, v version.Version) error {
+	// ensure release branch exist
+	// checkout release branch
+	// pre-release hook
+	// -> version set
+	// -> commit version change
+	// create tag
+	// post-release hook
+	// -> version bump
+	// -> commit version change
+	// -> push tag
+	// -> push release branch
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// releaseCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// releaseCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	return nil
 }

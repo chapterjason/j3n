@@ -37,11 +37,11 @@ type GitReleaseBranchFormatter = func(v version.Version) string
 type GitReleaseBranchChecker = func(s string) bool
 
 var (
-	DefaultGitReleaseBranchExpression                           = regexp.MustCompile("^release/\\d+\\.\\d+$")
-	DefaultGitReleaseBranchFormatter  GitReleaseBranchFormatter = func(v version.Version) string {
+	DefaultGitReleaseBranchExpression = regexp.MustCompile("^release/\\d+\\.\\d+$")
+	DefaultGitReleaseBranchFormatter  = func(v version.Version) string {
 		return fmt.Sprintf("release/%d.%d", v.Major, v.Minor)
 	}
-	DefaultGitReleaseBranchChecker GitReleaseBranchChecker = func(s string) bool {
+	DefaultGitReleaseBranchChecker = func(s string) bool {
 		return DefaultGitReleaseBranchExpression.MatchString(s)
 	}
 )
@@ -60,6 +60,6 @@ func Branches(r *git.Repository) (storer.ReferenceIter, error) {
 	), nil
 }
 
-func IsReleaseBranch(short string) bool {
-	return DefaultGitReleaseBranchChecker(short)
+func IsReleaseBranch(name string) bool {
+	return DefaultGitReleaseBranchChecker(name)
 }

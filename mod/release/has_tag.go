@@ -34,11 +34,11 @@ import (
 type GitTagFormatter = func(v version.Version) string
 
 var (
-	DefaultGitTagFormatter GitTagFormatter = func(v version.Version) string {
+	DefaultGitTagFormatter = func(v version.Version) string {
 		return fmt.Sprintf("v%d.%d.%d", v.Major, v.Minor, v.Patch)
 	}
 )
 
-func HasTag(repo *git.Repository, tag version.Version) (bool, error) {
-	return gitx.HasTag(repo, DefaultGitTagFormatter(tag))
+func HasTag(r *git.Repository, v version.Version) (bool, error) {
+	return gitx.HasTag(r, DefaultGitTagFormatter(v))
 }
