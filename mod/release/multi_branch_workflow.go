@@ -24,6 +24,9 @@ package release
 
 import (
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/pkg/errors"
 
 	"github.com/chapterjason/j3n/mod/version"
 )
@@ -66,13 +69,13 @@ func (m *MultiBranchWorkflow) preReleasePatch(r *git.Repository, v version.Versi
 	b, err := r.Branch(rbs)
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to get release branch")
 	}
 
 	w, err := r.Worktree()
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to get worktree")
 	}
 
 	err = w.Checkout(
@@ -84,13 +87,13 @@ func (m *MultiBranchWorkflow) preReleasePatch(r *git.Repository, v version.Versi
 	)
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to checkout release branch")
 	}
 
 	err = version.Set(v)
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to set version")
 	}
 
 	_, err = w.Commit(
@@ -101,7 +104,7 @@ func (m *MultiBranchWorkflow) preReleasePatch(r *git.Repository, v version.Versi
 	)
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to commit update")
 	}
 
 	return nil
@@ -112,7 +115,7 @@ func (m *MultiBranchWorkflow) postReleasePatch(r *git.Repository, v version.Vers
 	w, err := r.Worktree()
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to get worktree")
 	}
 
 	v.Patch++
@@ -121,7 +124,7 @@ func (m *MultiBranchWorkflow) postReleasePatch(r *git.Repository, v version.Vers
 	err = version.Set(v)
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to set version")
 	}
 
 	_, err = w.Commit(
@@ -132,18 +135,69 @@ func (m *MultiBranchWorkflow) postReleasePatch(r *git.Repository, v version.Vers
 	)
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to commit update")
 	}
 
 	return nil
 }
 
 func (m *MultiBranchWorkflow) preReleaseMinor(r *git.Repository, v version.Version) error {
-	panic("implement me")
+	rbs := GitReleaseBranchFormatter(v)
+
+	_, err := r.Branch(rbs)
+
+	if err != nil {
+		if errors.Is(err, git.ErrBranchNotFound) {
+			h, err := r.Head()
+
+			if err != nil {
+				return errors.Wrap(err, "failed to get head")
+			}
+
+			ref := plumbing.NewHashReference(plumbing.NewBranchReferenceName(rbs), h.Hash())
+
+			err = r.Storer.SetReference(ref)
+
+			if err != nil {
+				return errors.Wrap(err, "failed to set reference")
+			}
+
+			err = r.CreateBranch(
+				&config.Branch{
+					Name:  rbs,
+					Merge: ref.Name(),
+				},
+			)
+
+			if err != nil {
+				return err
+			}
+
+			w, err := r.Worktree()
+
+			if err != nil {
+				return errors.Wrap(err, "failed to get worktree")
+			}
+
+			err = w.Checkout(
+				&git.CheckoutOptions{
+					Branch: ref.Name(),
+				},
+			)
+
+			if err != nil {
+				return errors.Wrap(err, "failed to checkout branch")
+			}
+		} else {
+			return errors.Wrap(err, "failed to get branch")
+		}
+	}
+
+	return m.preReleasePatch(r, v)
 }
 
 func (m *MultiBranchWorkflow) postReleaseMinor(r *git.Repository, v version.Version) error {
-	panic("implement me")
+	return m.postReleasePatch(r, v)
 }
 
 func (m *MultiBranchWorkflow) preReleaseMajor(r *git.Repository, v version.Version) error {

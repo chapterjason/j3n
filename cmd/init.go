@@ -9,9 +9,14 @@ import (
 	"path"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/chapterjason/j3n/mod/release"
+	"github.com/chapterjason/j3n/mod/version"
 )
 
 var (
@@ -46,6 +51,8 @@ var initCmd = &cobra.Command{
 // - save config
 // - commit config
 func initProject(directory string, workflow string) error {
+	v := version.MustParse("0.1.0-DEV")
+
 	if workflow != "multi_branch" {
 		return errors.New("only multi_branch workflow is supported")
 	}
@@ -54,7 +61,7 @@ func initProject(directory string, workflow string) error {
 		wd, err := os.Getwd()
 
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to get working directory")
 		}
 
 		directory = wd
@@ -67,16 +74,16 @@ func initProject(directory string, workflow string) error {
 			err = os.MkdirAll(directory, os.ModePerm)
 
 			if err != nil {
-				return err
+				return errors.Wrap(err, "failed to create directory")
 			}
 		} else {
-			return err
+			return errors.Wrap(err, "failed to stat directory")
 		}
 	} else {
 		f, err := os.ReadDir(directory)
 
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to read directory")
 		}
 
 		if len(f) > 0 {
@@ -87,41 +94,33 @@ func initProject(directory string, workflow string) error {
 	r, err := git.PlainInit(directory, false)
 
 	if err != nil {
-		return err
-	}
-
-	cfg, err := r.Config()
-
-	if err != nil {
-		return err
-	}
-
-	cfg.Init.DefaultBranch = "release/0.1"
-
-	err = r.SetConfig(cfg)
-
-	if err != nil {
-		return err
-	}
-
-	if err != nil {
-		return err
-	}
-
-	viper.Set("$schema", "https://raw.githubusercontent.com/chapterjason/j3n/release/0.1/resources/schema/all.json")
-	viper.Set("version", "0.1.0-DEV")
-	viper.Set("release.workflow", workflow)
-
-	err = viper.SafeWriteConfigAs(path.Join(directory, "j3n.json"))
-
-	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to initialize git repository")
 	}
 
 	w, err := r.Worktree()
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to get worktree")
+	}
+
+	viper.Set("$schema", "https://raw.githubusercontent.com/chapterjason/j3n/release/0.1/resources/schema/all.json")
+	viper.Set("version.current", v.String())
+	viper.Set("release.workflow.type", workflow)
+
+	err = viper.SafeWriteConfigAs(path.Join(directory, "j3n.json"))
+
+	if err != nil {
+		return errors.Wrap(err, "failed to write config")
+	}
+
+	err = w.AddWithOptions(
+		&git.AddOptions{
+			All: true,
+		},
+	)
+
+	if err != nil {
+		return errors.Wrap(err, "failed to add files")
 	}
 
 	_, err = w.Commit(
@@ -132,7 +131,49 @@ func initProject(directory string, workflow string) error {
 	)
 
 	if err != nil {
+		return errors.Wrap(err, "failed to commit files")
+	}
+
+	h, err := r.Head()
+
+	if err != nil {
+		return errors.Wrap(err, "failed to get head")
+	}
+
+	rbs := release.GitReleaseBranchFormatter(v)
+	ref := plumbing.NewHashReference(plumbing.NewBranchReferenceName(rbs), h.Hash())
+
+	err = r.Storer.SetReference(ref)
+
+	if err != nil {
+		return errors.Wrapf(err, "failed to create %s branch", rbs)
+	}
+
+	err = r.CreateBranch(
+		&config.Branch{
+			Name:  rbs,
+			Merge: ref.Name(),
+		},
+	)
+
+	if err != nil {
 		return err
+	}
+
+	err = w.Checkout(
+		&git.CheckoutOptions{
+			Branch: ref.Name(),
+		},
+	)
+
+	if err != nil {
+		return errors.Wrap(err, "failed to checkout branch")
+	}
+
+	err = r.Storer.RemoveReference(plumbing.Master)
+
+	if err != nil {
+		return errors.Wrap(err, "failed to delete branch")
 	}
 
 	return nil

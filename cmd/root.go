@@ -36,6 +36,7 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:              "j3n",
 	PersistentPreRun: logrusx.ToggleDebug,
+	SilenceUsage:     true,
 	Short:            "Enhances your development experience",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
