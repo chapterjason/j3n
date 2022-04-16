@@ -1,25 +1,24 @@
 {
   "$schema": "./resources/schema/all.json",
-  "version": "0.1.0",
   "actions": {
     "build": {
       "steps": {
         "go": {
-          "type": "exec",
           "output": true,
           "params": {
-            "command": "go",
             "args": [
               "build",
               "-o",
               "./dist/j3n"
             ],
+            "command": "go",
             "ignore_exit_codes": [
               2
             ],
             "print_stderr": true,
             "print_stdout": true
-          }
+          },
+          "type": "exec"
         }
       }
     }
@@ -28,5 +27,6 @@
     "workflow": {
       "type": "multi_branch"
     }
-  }
+  },
+  "version": "0.1.0-DEV"
 }
