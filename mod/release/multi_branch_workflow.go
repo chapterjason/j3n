@@ -78,6 +78,8 @@ func (m *MultiBranchWorkflow) preReleasePatch(r *git.Repository, v version.Versi
 	err = w.Checkout(
 		&git.CheckoutOptions{
 			Branch: b.Merge,
+			Keep:   true,
+			Force:  false,
 		},
 	)
 
