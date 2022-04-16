@@ -35,7 +35,7 @@ var (
 	ErrAlreadyReleased = errors.New("already released")
 )
 
-func Release(r *git.Repository, v version.Version) error {
+func Release(r *git.Repository, v version.Version, wf Workflow) error {
 	has, err := HasTag(r, v)
 
 	if err != nil {
@@ -47,11 +47,39 @@ func Release(r *git.Repository, v version.Version) error {
 	}
 
 	if v.Patch != 0 {
-		return Patch(r, v)
+		return doRelease(r, v, wf, ReleaseTypePatch)
 	} else if v.Minor != 0 {
-		return Minor(r, v)
+		return doRelease(r, v, wf, ReleaseTypeMinor)
 	} else {
-		return Major(r, v)
+		return doRelease(r, v, wf, ReleaseTypeMajor)
+	}
+}
+
+func doRelease(r *git.Repository, v version.Version, wf Workflow, rt ReleaseType) error {
+	err := wf.PreRelease(r, v, rt)
+
+	if err != nil {
+		return err
+	}
+
+	h, err := r.Head()
+
+	if err != nil {
+		return err
+	}
+
+	tn := GitTagFormatter(v)
+
+	_, err = r.CreateTag(tn, h.Hash(), nil)
+
+	if err != nil {
+		return err
+	}
+
+	err = wf.PostRelease(r, v, rt)
+
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -22,12 +22,6 @@
 
 package version
 
-import (
-	"fmt"
-	"strings"
-	"time"
-)
-
 var (
 	Strategies = []Strategy{}
 )
@@ -35,29 +29,4 @@ var (
 type Strategy interface {
 	Get() ([]Version, error)
 	Set(Version) error
-}
-
-func preparePlacement(p string, v Version) string {
-	// version
-	p = strings.ReplaceAll(p, "{{VERSION_MAJOR}}", fmt.Sprintf("%d", v.Major))
-	p = strings.ReplaceAll(p, "{{VERSION_MINOR}}", fmt.Sprintf("%d", v.Minor))
-	p = strings.ReplaceAll(p, "{{VERSION_PATCH}}", fmt.Sprintf("%d", v.Patch))
-	p = strings.ReplaceAll(p, "{{VERSION_PRERELEASE}}", strings.Join(v.Prerelease, "."))
-	p = strings.ReplaceAll(p, "{{VERSION_BUILD}}", strings.Join(v.Build, "."))
-	p = strings.ReplaceAll(p, "{{VERSION}}", v.String())
-
-	// time
-	now := time.Now()
-
-	p = strings.ReplaceAll(p, "{{TIME_YEAR}}", fmt.Sprintf("%d", now.Year()))
-	p = strings.ReplaceAll(p, "{{TIME_MONTH}}", fmt.Sprintf("%02d", int(now.Month())))
-	p = strings.ReplaceAll(p, "{{TIME_DAY}}", fmt.Sprintf("%02d", now.Day()))
-	p = strings.ReplaceAll(p, "{{TIME_HOUR}}", fmt.Sprintf("%02d", now.Hour()))
-	p = strings.ReplaceAll(p, "{{TIME_MINUTE}}", fmt.Sprintf("%02d", now.Minute()))
-	p = strings.ReplaceAll(p, "{{TIME_SECOND}}", fmt.Sprintf("%02d", now.Second()))
-	p = strings.ReplaceAll(p, "{{TIME_NANOSECOND}}", fmt.Sprintf("%d", now.Nanosecond()))
-	p = strings.ReplaceAll(p, "{{TIME_RFC3339}}", now.Format(time.RFC3339))
-	p = strings.ReplaceAll(p, "{{TIME_RFC3339_NANO}}", now.Format(time.RFC3339Nano))
-
-	return p
 }

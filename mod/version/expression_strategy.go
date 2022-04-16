@@ -29,7 +29,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"strings"
 
 	"github.com/chapterjason/j3n/modx/regexpx"
 )
@@ -45,7 +44,7 @@ func NewExpressionStrategy(directories []string, pattern, expression, replacemen
 	return &ExpressionStrategy{
 		directories: directories,
 		pattern:     pattern,
-		expression:  regexp.MustCompile(strings.ReplaceAll(expression, "{{VERSION}}", SemverExpressionPartial.String())),
+		expression:  ReplaceExpression(expression),
 		replacement: replacement,
 	}
 }
@@ -79,7 +78,7 @@ func (es *ExpressionStrategy) Set(v Version) error {
 		return err
 	}
 
-	replacement := preparePlacement(es.replacement, v)
+	replacement := Replace(es.replacement, v)
 
 	for _, file := range files {
 		err = es.setFile(file, replacement)

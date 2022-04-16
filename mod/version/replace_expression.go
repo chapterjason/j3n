@@ -20,15 +20,13 @@
  * THE SOFTWARE.
  */
 
-package release
+package version
 
 import (
-	"github.com/go-git/go-git/v5"
-	"github.com/pkg/errors"
-
-	"github.com/chapterjason/j3n/mod/version"
+	"regexp"
+	"strings"
 )
 
-func Major(r *git.Repository, v version.Version) error {
-	return errors.New("not implemented")
+func ReplaceExpression(text string) *regexp.Regexp {
+	return regexp.MustCompile(strings.ReplaceAll(text, "{{VERSION}}", SemverExpressionPartial.String()))
 }

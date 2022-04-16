@@ -34,122 +34,115 @@
     }
   },
   "type": "object",
-  "properties": {
-    "actions": {
-      "patternProperties": {
-        ".*": {
-          "type": "object",
-          "properties": {
-            "dependencies": {
-              "type": "array",
-              "uniqueItems": true,
-              "items": {
-                "type": "string"
-              }
-            },
-            "steps": {
-              "patternProperties": {
-                ".*": {
-                  "anyOf": [
+  "patternProperties": {
+    "\\w+": {
+      "type": "object",
+      "properties": {
+        "dependencies": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "steps": {
+          "patternProperties": {
+            "\\w+": {
+              "anyOf": [
+                {
+                  "allOf": [
                     {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/base"
-                        },
-                        {
-                          "properties": {
-                            "type": {
-                              "const": "exec"
-                            },
-                            "params": {
-                              "properties": {
-                                "command": {
-                                  "type": "string"
-                                },
-                                "args": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string"
-                                  }
-                                },
-                                "directory": {
-                                  "type": "string"
-                                },
-                                "continue_on_error": {
-                                  "type": "boolean"
-                                },
-                                "ignore_exit_codes": {
-                                  "type": "array",
-                                  "uniqueItems": true,
-                                  "items": {
-                                    "type": "integer"
-                                  }
-                                },
-                                "print_stdout": {
-                                  "type": "boolean"
-                                },
-                                "print_stderr": {
-                                  "type": "boolean"
-                                },
-                                "env": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string"
-                                  }
-                                }
-                              },
-                              "required": [
-                                "command"
-                              ]
-                            }
-                          },
-                          "required": [
-                            "params"
-                          ]
-                        }
-                      ]
+                      "$ref": "#/definitions/base"
                     },
                     {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/base"
+                      "properties": {
+                        "type": {
+                          "const": "exec"
                         },
-                        {
+                        "params": {
                           "properties": {
-                            "type": {
-                              "const": "print"
+                            "command": {
+                              "type": "string"
                             },
-                            "params": {
-                              "properties": {
-                                "stream": {
-                                  "type": "string",
-                                  "enum": [
-                                    "stderr",
-                                    "stdout"
-                                  ]
-                                }
+                            "args": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "directory": {
+                              "type": "string"
+                            },
+                            "continue_on_error": {
+                              "type": "boolean"
+                            },
+                            "ignore_exit_codes": {
+                              "type": "array",
+                              "uniqueItems": true,
+                              "items": {
+                                "type": "integer"
+                              }
+                            },
+                            "print_stdout": {
+                              "type": "boolean"
+                            },
+                            "print_stderr": {
+                              "type": "boolean"
+                            },
+                            "env": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
                               }
                             }
                           },
                           "required": [
-                            "input"
+                            "command"
                           ]
                         }
+                      },
+                      "required": [
+                        "params"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/base"
+                    },
+                    {
+                      "properties": {
+                        "type": {
+                          "const": "print"
+                        },
+                        "params": {
+                          "properties": {
+                            "stream": {
+                              "type": "string",
+                              "enum": [
+                                "stderr",
+                                "stdout"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      "required": [
+                        "input"
                       ]
                     }
                   ]
                 }
-              }
+              ]
             }
-          },
-          "required": [
-            "steps"
-          ]
+          }
         }
-      }
+      },
+      "required": [
+        "steps"
+      ]
     }
-  },
-  "required": [
-    "actions"
-  ]
+  }
 }

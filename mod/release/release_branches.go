@@ -23,43 +23,23 @@
 package release
 
 import (
-	"fmt"
 	"regexp"
-
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/storer"
 
 	"github.com/chapterjason/j3n/mod/version"
 )
 
-type GitReleaseBranchFormatter = func(v version.Version) string
-type GitReleaseBranchChecker = func(s string) bool
-
 var (
-	DefaultGitReleaseBranchExpression = regexp.MustCompile("^release/\\d+\\.\\d+$")
-	DefaultGitReleaseBranchFormatter  = func(v version.Version) string {
-		return fmt.Sprintf("release/%d.%d", v.Major, v.Minor)
+	GitReleaseBranchFormat     = "release/{{VERSION_MAJOR}}.{{VERSION_MINOR}}"
+	GitReleaseBranchExpression = "^release/\\d+\\.\\d+$"
+
+	GitReleaseBranchFormatter = func(v version.Version) string {
+		return version.Replace(GitReleaseBranchFormat, v)
 	}
-	DefaultGitReleaseBranchChecker = func(s string) bool {
-		return DefaultGitReleaseBranchExpression.MatchString(s)
+	GitReleaseBranchMatcher = func(s string) bool {
+		return regexp.MustCompile(GitReleaseBranchExpression).MatchString(s)
 	}
 )
 
-func Branches(r *git.Repository) (storer.ReferenceIter, error) {
-	branchIter, err := r.Branches()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return storer.NewReferenceFilteredIter(
-		func(ref *plumbing.Reference) bool {
-			return ref.Name().IsBranch() && IsReleaseBranch(ref.Name().Short())
-		}, branchIter,
-	), nil
-}
-
 func IsReleaseBranch(name string) bool {
-	return DefaultGitReleaseBranchChecker(name)
+	return GitReleaseBranchMatcher(name)
 }

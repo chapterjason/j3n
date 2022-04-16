@@ -20,23 +20,32 @@
  * THE SOFTWARE.
  */
 
-package release
+package viperx
 
 import (
-	"github.com/go-git/go-git/v5"
-	"github.com/pkg/errors"
+	"bytes"
+	"encoding/json"
+	"fmt"
 
-	"github.com/chapterjason/j3n/mod/version"
+	"github.com/pkg/errors"
 )
 
-func Minor(r *git.Repository, v version.Version) error {
-	// ensure release branch exist
-	// checkout release branch
-	// pre-release hook
-	// create tag
-	// post-release hook
-	// push tag?
-	// push release branch?
+func Transcode(in, out interface{}) error {
+	buf := bytes.NewBuffer([]byte{})
 
-	return errors.New("not implemented")
+	err := json.NewEncoder(buf).Encode(in)
+
+	if err != nil {
+		return errors.Wrap(err, "failed to encode input")
+	}
+
+	fmt.Println(buf.String())
+
+	err = json.NewDecoder(buf).Decode(out)
+
+	if err != nil {
+		return errors.Wrap(err, "failed to decode output")
+	}
+
+	return nil
 }

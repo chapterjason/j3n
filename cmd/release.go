@@ -22,13 +22,16 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/chapterjason/j3n/mod/release"
 	"github.com/chapterjason/j3n/mod/version"
+	"github.com/chapterjason/j3n/modx/viperx"
 )
 
 // releaseCmd represents the release command
@@ -37,6 +40,16 @@ var releaseCmd = &cobra.Command{
 	Short: "Create a new release of a project",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		rs := viper.Get("release")
+
+		fmt.Printf("rs: %+v\n", rs)
+
+		var rc release.Config
+
+		if err := viperx.Transcode(rs, &rc); err != nil {
+			return err
+		}
+
 		v, err := version.Parse(args[0])
 
 		if err != nil {
@@ -55,20 +68,10 @@ var releaseCmd = &cobra.Command{
 			return err
 		}
 
-		return release.Release(repo, v)
+		return release.Release(repo, v, rc.Workflow)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(releaseCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// releaseCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// releaseCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

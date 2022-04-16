@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "definitions": {
+    "multi_branch": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "multi_branch"
+        },
+        "branch_format": {
+          "type": "string"
+        },
+        "branch_expression": {
+          "type": "string",
+          "format": "regex"
+        },
+        "update_message_format": {
+          "type": "string"
+        },
+        "bump_message_format": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "workflow": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/multi_branch"
+        }
+      ]
+    }
+  },
+  "required": [
+    "workflow"
+  ]
+}

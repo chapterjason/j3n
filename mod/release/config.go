@@ -23,59 +23,41 @@
 package release
 
 import (
-	"github.com/go-git/go-git/v5"
+	"encoding/json"
+	"fmt"
 
-	"github.com/chapterjason/j3n/mod/version"
+	"github.com/chapterjason/j3n/modx/viperx"
 )
 
-/**
-Possible Json Config format:
-{
-	"hooks": {
-		"pre-release": [
-			[
-				"version:set",
-				{
-					"format": "{{VERSION}}"
-				}
-			],
-			[
-				"git:commit",
-				{
-					"message": "Update version for {{VERSION}}"
-				}
-	  		]
-		],
-		"post-release": [
-			[
-				"version:set",
-				{
-					"format": "{{VERSION}}"
-				}
-			],
-			[
-				"git:commit",
-				{
-					"message": "Bump version to {{VERSION}}"
-				}
-	  		]
-		],
-	},
+type Config struct {
+	Workflow Workflow `json:"workflow"`
 }
-*/
 
-func Patch(r *git.Repository, v version.Version) error {
-	// ensure release branch exist
-	// checkout release branch
-	// pre-release hook
-	// -> version set
-	// -> commit version change
-	// create tag
-	// post-release hook
-	// -> version bump
-	// -> commit version change
-	// -> push tag
-	// -> push release branch
+func (d *Config) UnmarshalJSON(data []byte) error {
+	var typ struct {
+		Workflow map[string]any `json:"workflow"`
+	}
 
-	return nil
+	if err := json.Unmarshal(data, &typ); err != nil {
+		return err
+	}
+
+	tp, ok := typ.Workflow["type"]
+
+	if !ok {
+		return fmt.Errorf("missing workflow type")
+	}
+
+	switch tp {
+	case "multi_branch":
+		d.Workflow = &MultiBranchWorkflow{
+			BranchFormat:        "release/{{VERSION_MAJOR}}.{{VERSION_MINOR}}",
+			BranchExpression:    "release/\\d+\\.\\d+",
+			UpdateMessageFormat: "Update version for {{VERSION}}",
+			BumpMessageFormat:   "Bump version to {{VERSION}}",
+		}
+	}
+
+	return viperx.Transcode(typ.Workflow, d.Workflow)
+
 }

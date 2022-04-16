@@ -124,3 +124,23 @@ func TestParse(t *testing.T) {
 		)
 	}
 }
+
+func TestClone(t *testing.T) {
+	t.Run(
+		"test clone", func(t *testing.T) {
+			v := MustParse("3.3.0")
+
+			v2 := v
+			v2.Patch++
+			v2.Prerelease = []string{"beta"}
+
+			if v.String() != "3.3.0" {
+				t.Errorf("v.String() = %v, want %v", v.String(), "3.3.0")
+			}
+
+			if v2.String() != "3.3.1-beta" {
+				t.Errorf("v2.String() = %v, want %v", v2.String(), "3.3.1-beta")
+			}
+		},
+	)
+}

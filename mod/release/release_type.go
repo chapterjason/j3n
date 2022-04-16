@@ -20,50 +20,12 @@
  * THE SOFTWARE.
  */
 
-package cmd
+package release
 
-import (
-	"fmt"
+type ReleaseType int
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-
-	"github.com/chapterjason/j3n/mod/action"
-	"github.com/chapterjason/j3n/modx/viperx"
+const (
+	ReleaseTypeMajor ReleaseType = iota
+	ReleaseTypeMinor
+	ReleaseTypePatch
 )
-
-// actionCmd represents the action command
-var actionCmd = &cobra.Command{
-	Use:   "action [name]",
-	Short: "Run an action",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		as := viper.AllSettings()
-
-		if as == nil {
-			return fmt.Errorf("no actions defined")
-		}
-
-		var m action.Map
-
-		err := viperx.Transcode(as, &m)
-
-		if err != nil {
-			return err
-		}
-
-		ep := action.NewExecuter(&m)
-
-		err = ep.Execute(args[0])
-
-		if err != nil {
-			return err
-		}
-
-		return nil
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(actionCmd)
-}

@@ -31,14 +31,14 @@ import (
 	"github.com/chapterjason/j3n/modx/gitx"
 )
 
-type GitTagFormatter = func(v version.Version) string
+type GitTagFormatterFunc = func(v version.Version) string
 
 var (
-	DefaultGitTagFormatter = func(v version.Version) string {
+	GitTagFormatter = func(v version.Version) string {
 		return fmt.Sprintf("v%d.%d.%d", v.Major, v.Minor, v.Patch)
 	}
 )
 
 func HasTag(r *git.Repository, v version.Version) (bool, error) {
-	return gitx.HasTag(r, DefaultGitTagFormatter(v))
+	return gitx.HasTag(r, GitTagFormatter(v))
 }

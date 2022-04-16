@@ -65,7 +65,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.j3n.json)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./j3n.json)")
 	rootCmd.PersistentFlags().BoolVar(&logrusx.Debug, "debug", false, "verbose logging")
 
 	// Cobra also supports local flags, which will only run
@@ -80,15 +80,23 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
+		// home, err := os.UserHomeDir()
+		// cobra.CheckErr(err)
 
 		// Search config in home directory with name ".j3n" (without extension).
-		viper.AddConfigPath(home)
+		// viper.AddConfigPath(home)
+		viper.AddConfigPath(".")
 		viper.SetConfigType("json")
-		viper.SetConfigName(".j3n")
+		viper.SetConfigName("j3n")
 	}
 
 	viper.AutomaticEnv()
-	viper.ReadInConfig()
+
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found; ignore error if desired
+		} else {
+			cobra.CheckErr(err)
+		}
+	}
 }

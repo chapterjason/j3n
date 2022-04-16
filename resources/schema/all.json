@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "actions": {
+      "type": "object",
+      "$ref": "./action.json"
+    },
+    "release": {
+      "type": "object",
+      "$ref": "./release.json"
+    }
+  }
+}

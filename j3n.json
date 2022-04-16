@@ -1,5 +1,5 @@
 {
-  "$schema": "./resources/schema/action.json",
+  "$schema": "./resources/schema/all.json",
   "actions": {
     "build": {
       "steps": {
@@ -21,6 +21,11 @@
           }
         }
       }
+    }
+  },
+  "release": {
+    "workflow": {
+      "type": "multi_branch"
     }
   }
 }
