@@ -19,40 +19,43 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package cmd
+
+package version
 
 import (
-	"os"
-	"path"
-
-	"github.com/spf13/cobra"
-
-	"github.com/chapterjason/j3n/mod/version"
+	"github.com/spf13/viper"
 )
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Manage the version of a project",
+type VersionStrategy struct {
+	directory string
 }
 
-func init() {
-	rootCmd.AddCommand(versionCmd)
+func NewVersionStrategy(directory string) *VersionStrategy {
+	return &VersionStrategy{
+		directory,
+	}
+}
 
-	wd, err := os.Getwd()
+func (vs *VersionStrategy) Get() ([]Version, error) {
+	vst := viper.GetString("version")
+
+	v, err := Parse(vst)
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	pkgPath := path.Join(wd, "package.json")
+	return []Version{v}, nil
+}
 
-	if _, err := os.Stat(pkgPath); err == nil {
-		version.Strategies = append(version.Strategies, version.NewNpmStrategy(wd))
+func (vs *VersionStrategy) Set(v Version) error {
+	viper.Set("version", v.String())
+
+	err := viper.SafeWriteConfig()
+
+	if err != nil {
+		return err
 	}
 
-	j3nPath := path.Join(wd, "j3n.json")
-
-	if _, err := os.Stat(j3nPath); err == nil {
-		version.Strategies = append(version.Strategies, version.NewVersionStrategy(wd))
-	}
+	return nil
 }

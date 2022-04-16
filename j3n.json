@@ -1,5 +1,6 @@
 {
   "$schema": "./resources/schema/all.json",
+  "version": "0.1.0",
   "actions": {
     "build": {
       "steps": {
