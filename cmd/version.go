@@ -66,9 +66,11 @@ func init() {
 }
 
 func initVersionConfig() {
-	strategies := viper.Get("version.strategies").([]interface{})
+	sv := viper.Get("version.strategies")
 
-	if strategies != nil {
+	if sv != nil {
+		strategies := sv.([]interface{})
+
 		for _, strategy := range strategies {
 			type typ struct {
 				Type string `json:"type"`

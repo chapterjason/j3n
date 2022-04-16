@@ -50,6 +50,16 @@ func initProject(directory string, workflow string) error {
 		return errors.New("only multi_branch workflow is supported")
 	}
 
+	if directory == "" {
+		wd, err := os.Getwd()
+
+		if err != nil {
+			return err
+		}
+
+		directory = wd
+	}
+
 	_, err := os.Stat(directory)
 
 	if err != nil {
