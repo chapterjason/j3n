@@ -19,15 +19,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package cmd
 
 import (
 	"os"
 	"path"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/chapterjason/j3n/mod/version"
+	"github.com/chapterjason/j3n/modx/viperx"
+)
+
+var (
+	ErrUnknownStrategy = errors.New("unknown versioning strategy")
 )
 
 var versionCmd = &cobra.Command{
@@ -54,5 +62,33 @@ func init() {
 
 	if _, err := os.Stat(j3nPath); err == nil {
 		version.Strategies = append(version.Strategies, version.NewVersionStrategy(wd))
+	}
+}
+
+func initVersionConfig() {
+	strategies := viper.Get("version.strategies").([]interface{})
+
+	if strategies != nil {
+		for _, strategy := range strategies {
+			type typ struct {
+				Type string `json:"type"`
+			}
+
+			t := typ{}
+
+			err := viperx.Transcode(strategy, &t)
+			cobra.CheckErr(err)
+
+			switch t.Type {
+			case "expression":
+				es := version.ExpressionStrategy{}
+				err := viperx.Transcode(strategy, &es)
+				cobra.CheckErr(err)
+
+				version.Strategies = append(version.Strategies, &es)
+			default:
+				cobra.CheckErr(ErrUnknownStrategy)
+			}
+		}
 	}
 }

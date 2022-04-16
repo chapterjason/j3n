@@ -25,7 +25,6 @@ package viperx
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 
 	"github.com/pkg/errors"
 )
@@ -38,8 +37,6 @@ func Transcode(in, out interface{}) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to encode input")
 	}
-
-	fmt.Println(buf.String())
 
 	err = json.NewDecoder(buf).Decode(out)
 

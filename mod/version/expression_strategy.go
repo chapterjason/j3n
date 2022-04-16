@@ -34,19 +34,14 @@ import (
 )
 
 type ExpressionStrategy struct {
-	directories []string
-	pattern     string
-	expression  *regexp.Regexp
-	replacement string
+	Directories []string `json:"directories"`
+	Pattern     string   `json:"pattern"`
+	Expression  string   `json:"expression"`
+	Replacement string   `json:"replacement"`
 }
 
-func NewExpressionStrategy(directories []string, pattern, expression, replacement string) *ExpressionStrategy {
-	return &ExpressionStrategy{
-		directories: directories,
-		pattern:     pattern,
-		expression:  ReplaceExpression(expression),
-		replacement: replacement,
-	}
+func (es *ExpressionStrategy) GetExpression() *regexp.Regexp {
+	return ReplaceExpression(es.Expression)
 }
 
 func (es *ExpressionStrategy) Get() ([]Version, error) {
@@ -78,7 +73,7 @@ func (es *ExpressionStrategy) Set(v Version) error {
 		return err
 	}
 
-	replacement := Replace(es.replacement, v)
+	replacement := Replace(es.Replacement, v)
 
 	for _, file := range files {
 		err = es.setFile(file, replacement)
@@ -94,8 +89,8 @@ func (es *ExpressionStrategy) Set(v Version) error {
 func (es *ExpressionStrategy) getFiles() ([]string, error) {
 	files := []string{}
 
-	for _, directory := range es.directories {
-		pattern := path.Join(directory, es.pattern)
+	for _, directory := range es.Directories {
+		pattern := path.Join(directory, es.Pattern)
 		matches, err := filepath.Glob(pattern)
 
 		if err != nil {
@@ -128,8 +123,10 @@ func (es *ExpressionStrategy) setFile(path string, replacement string) error {
 		return err
 	}
 
-	if es.expression.Match(b) {
-		b = es.expression.ReplaceAll(b, []byte(replacement))
+	expr := es.GetExpression()
+
+	if expr.Match(b) {
+		b = expr.ReplaceAll(b, []byte(replacement))
 	}
 
 	err = f.Truncate(0)
@@ -172,14 +169,22 @@ func (es *ExpressionStrategy) getFile(file string) (Version, error) {
 		return Version{}, err
 	}
 
-	if es.expression.Match(b) {
-		mn, err := regexpx.MatchNamed(es.expression, b)
+	expr := es.GetExpression()
+
+	if expr.Match(b) {
+		mn, err := regexpx.MatchNamed(expr, b)
 
 		if err != nil {
 			return Version{}, err
 		}
 
-		parsed, err := Parse(mn["version"])
+		vs, ok := mn["version"]
+
+		if !ok {
+			return Version{}, nil
+		}
+
+		parsed, err := Parse(vs)
 
 		if err != nil {
 			return Version{}, err

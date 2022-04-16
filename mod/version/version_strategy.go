@@ -38,7 +38,7 @@ func NewVersionStrategy(directory string) *VersionStrategy {
 }
 
 func (vs *VersionStrategy) Get() ([]Version, error) {
-	vst := viper.GetString("version")
+	vst := viper.GetString("version.current")
 
 	v, err := Parse(vst)
 
@@ -50,7 +50,7 @@ func (vs *VersionStrategy) Get() ([]Version, error) {
 }
 
 func (vs *VersionStrategy) Set(v Version) error {
-	viper.Set("version", v.String())
+	viper.Set("version.current", v.String())
 
 	err := viper.WriteConfig()
 

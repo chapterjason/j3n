@@ -28,5 +28,18 @@
       "type": "multi_branch"
     }
   },
-  "version": "0.1.0-DEV"
+  "version": {
+    "current": "0.1.0-DEV",
+    "strategies": [
+      {
+        "directories": [
+          "./cmd"
+        ],
+        "expression": "j3n\\/release\\/\\d+\\.\\d+\\/resources",
+        "pattern": "init.go",
+        "replacement": "j3n/release/{{VERSION_MAJOR}}.{{VERSION_MINOR}}/resources",
+        "type": "expression"
+      }
+    ]
+  }
 }
