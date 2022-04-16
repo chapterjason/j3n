@@ -1,0 +1,26 @@
+{
+  "$schema": "./resources/schema/action.json",
+  "actions": {
+    "build": {
+      "steps": {
+        "go": {
+          "type": "exec",
+          "output": true,
+          "params": {
+            "command": "go",
+            "args": [
+              "build",
+              "-o",
+              "./dist/j3n"
+            ],
+            "ignore_exit_codes": [
+              2
+            ],
+            "print_stderr": true,
+            "print_stdout": true
+          }
+        }
+      }
+    }
+  }
+}

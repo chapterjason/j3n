@@ -80,10 +80,13 @@ func (p *executionPlan) planAction(name string, a *Action) error {
 
 func (p *executionPlan) planStep(ref reference, s *Step) error {
 	deps := s.Dependencies
-	deps = append(deps, s.Input)
 
-	for _, dependency := range s.Dependencies {
-		dependencyRef, err := resolveReference(ref.action, dependency)
+	if s.Input != "" {
+		deps = append(deps, s.Input)
+	}
+
+	for _, dependency := range deps {
+		dependencyRef, err := resolveReference(dependency, ref.action)
 
 		if err != nil {
 			return err

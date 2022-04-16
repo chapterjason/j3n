@@ -61,7 +61,7 @@ func (r *Executer) Execute(s string) error {
 		err := r.executeStep(ref, step)
 
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "failed to execute step %s", ref.String())
 		}
 	}
 
@@ -90,6 +90,8 @@ func (r *Executer) executeStep(ref reference, s *Step) error {
 	if !ok {
 		return fmt.Errorf("no runner for step type %s", s.Type)
 	}
+
+	fmt.Printf("Step: %s\n", ref.String())
 
 	out, err := sr(input, s.Params)
 

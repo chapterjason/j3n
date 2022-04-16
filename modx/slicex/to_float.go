@@ -20,72 +20,20 @@
  * THE SOFTWARE.
  */
 
-package cmd
+package slicex
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"os"
-
-	"github.com/spf13/cobra"
-
-	"github.com/chapterjason/j3n/mod/action"
+	"reflect"
 )
 
-// actionCmd represents the action command
-var actionCmd = &cobra.Command{
-	Use:   "action [name]",
-	Short: "Run an action",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		configFilePath, err := cmd.Flags().GetString("config")
+func ToFloat(a any) []float64 {
+	v := []float64{}
 
-		if err != nil {
-			return err
-		}
+	av := reflect.ValueOf(a)
 
-		file, err := os.OpenFile(configFilePath, os.O_RDONLY, 0600)
+	for i := 0; i < av.Len(); i++ {
+		v = append(v, av.Index(i).Interface().(float64))
+	}
 
-		if err != nil {
-			return err
-		}
-
-		defer func(file *os.File) {
-			err := file.Close()
-			if err != nil {
-				panic(err)
-			}
-		}(file)
-
-		b, err := ioutil.ReadAll(file)
-
-		if err != nil {
-			return err
-		}
-
-		var m action.Map
-
-		err = json.Unmarshal(b, &m)
-
-		if err != nil {
-			return err
-		}
-
-		ep := action.NewExecuter(&m)
-
-		err = ep.Execute(args[0])
-
-		if err != nil {
-			return err
-		}
-
-		return nil
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(actionCmd)
-
-	actionCmd.Flags().StringP("config", "c", "actions.json", "Path to config file")
-	actionCmd.MarkFlagFilename("config", "json")
+	return v
 }

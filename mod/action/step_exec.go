@@ -23,30 +23,72 @@
 package action
 
 import (
+	"bytes"
+	"fmt"
+	"os"
 	"os/exec"
+	"path"
 	"strings"
 
 	"github.com/pkg/errors"
+
+	"github.com/chapterjason/j3n/modx/slicex"
 )
 
 func init() {
 	MustRegister(
 		"exec", func(input any, params map[string]any) (any, error) {
 			command := params["command"].(string)
+
+			continueOnError := false
+			ignoreExitCodes := []float64{}
+			printStdout := false
+			printStderr := false
+
 			var args []string
 
+			var stdout, stderr bytes.Buffer
+
 			if params["args"] != nil {
-				args = params["args"].([]string)
+				args = slicex.ToString(params["args"])
 			}
 
 			cmd := exec.Command(command, args...)
 
 			if params["directory"] != nil {
-				cmd.Dir = params["directory"].(string)
+				dir := params["directory"].(string)
+
+				if !path.IsAbs(dir) {
+					wd, err := os.Getwd()
+
+					if err != nil {
+						return nil, errors.Wrap(err, "failed to get working directory")
+					}
+
+					dir = path.Join(wd, dir)
+				}
+
+				cmd.Dir = dir
 			}
 
 			if params["env"] != nil {
-				cmd.Env = params["env"].([]string)
+				cmd.Env = slicex.ToString(params["env"])
+			}
+
+			if params["continue_on_error"] != nil {
+				continueOnError = params["continueOnError"].(bool)
+			}
+
+			if params["ignore_exit_codes"] != nil {
+				ignoreExitCodes = slicex.ToFloat(params["ignore_exit_codes"])
+			}
+
+			if params["print_stdout"] != nil {
+				printStdout = params["print_stdout"].(bool)
+			}
+
+			if params["print_stderr"] != nil {
+				printStderr = params["print_stderr"].(bool)
 			}
 
 			if input != nil {
@@ -54,13 +96,34 @@ func init() {
 				cmd.Stdin = strings.NewReader(is)
 			}
 
-			b, err := cmd.CombinedOutput()
+			cmd.Stdout = &stdout
+			cmd.Stderr = &stderr
+
+			err := cmd.Start()
 
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to run command")
+				return nil, errors.Wrap(err, "failed to start command")
 			}
 
-			return string(b), nil
+			err = cmd.Wait()
+
+			if err != nil {
+				exitCode := cmd.ProcessState.ExitCode()
+
+				if !slicex.Contains(ignoreExitCodes, float64(exitCode)) && !continueOnError {
+					return nil, errors.Wrap(err, "failed to run command")
+				}
+			}
+
+			if printStdout {
+				fmt.Print(stdout.String())
+			}
+
+			if printStderr {
+				fmt.Print(stderr.String())
+			}
+
+			return stdout.String() + stderr.String(), nil
 		},
 	)
 }

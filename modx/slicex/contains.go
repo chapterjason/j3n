@@ -22,7 +22,7 @@
 
 package slicex
 
-func Contains(s []string, e string) bool {
+func Contains[T string | int | float64](s []T, e T) bool {
 	for _, a := range s {
 		if a == e {
 			return true

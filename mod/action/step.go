@@ -23,9 +23,11 @@
 package action
 
 type Step struct {
-	Type         string         `json:"type" yaml:"type"`
-	Dependencies []string       `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
-	Input        string         `json:"input,omitempty" yaml:"input,omitempty"`
-	Output       bool           `json:"output,omitempty" yaml:"output,omitempty"`
-	Params       map[string]any `json:"params,omitempty" yaml:"params,omitempty"`
+	Type            string         `json:"type" yaml:"type"`
+	Dependencies    []string       `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+	Input           string         `json:"input,omitempty" yaml:"input,omitempty"`
+	Output          bool           `json:"output,omitempty" yaml:"output,omitempty"`
+	ContinueOnError bool           `json:"continue_on_error,omitempty" yaml:"continue_on_error,omitempty"`
+	IgnoreExitCodes []int          `json:"ignore_exit_codes,omitempty" yaml:"ignore_exit_codes,omitempty"`
+	Params          map[string]any `json:"params,omitempty" yaml:"params,omitempty"`
 }

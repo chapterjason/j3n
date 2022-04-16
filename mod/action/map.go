@@ -23,7 +23,7 @@
 package action
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 type Map struct {
@@ -38,7 +38,7 @@ func (am *Map) HasAction(action string) bool {
 
 func (am *Map) GetAction(action string) (*Action, error) {
 	if !am.HasAction(action) {
-		return nil, errors.New("action does not exist")
+		return nil, fmt.Errorf("action %s not found", action)
 	}
 
 	return am.Actions[action], nil
