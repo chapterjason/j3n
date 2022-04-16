@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+//goland:noinspection GoNameStartsWithPackageName
 type VersionStrategy struct {
 	directory string
 }
@@ -51,7 +52,7 @@ func (vs *VersionStrategy) Get() ([]Version, error) {
 func (vs *VersionStrategy) Set(v Version) error {
 	viper.Set("version", v.String())
 
-	err := viper.SafeWriteConfig()
+	err := viper.WriteConfig()
 
 	if err != nil {
 		return err

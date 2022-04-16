@@ -22,7 +22,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/go-git/go-git/v5"
@@ -41,8 +40,6 @@ var releaseCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		rs := viper.Get("release")
-
-		fmt.Printf("rs: %+v\n", rs)
 
 		var rc release.Config
 
