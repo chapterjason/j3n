@@ -30,7 +30,23 @@
         "directories",
         "pattern",
         "expression",
-        "replacement"
+        "replacement",
+        "type"
+      ]
+    },
+    "npm": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "npm"
+        },
+        "directory": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
       ]
     }
   },
@@ -46,6 +62,9 @@
         "anyOf": [
           {
             "$ref": "#/definitions/expression"
+          },
+          {
+            "$ref": "#/definitions/npm"
           }
         ]
       }

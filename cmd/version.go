@@ -82,6 +82,12 @@ func initVersionConfig() {
 			cobra.CheckErr(err)
 
 			switch t.Type {
+			case "npm":
+				ns := version.NpmStrategy{}
+				err := viperx.Transcode(strategy, &ns)
+				cobra.CheckErr(err)
+
+				version.Strategies = append(version.Strategies, &ns)
 			case "expression":
 				es := version.ExpressionStrategy{}
 				err := viperx.Transcode(strategy, &es)

@@ -123,7 +123,7 @@ func initProject(directory string, workflow string) error {
 		return errors.Wrap(err, "failed to open git repository")
 	}
 
-	viper.Set("$schema", "https://raw.githubusercontent.com/chapterjason/j3n/release/0.1/resources/schema/all.json")
+	viper.Set("$schema", "https://raw.githubusercontent.com/chapterjason/j3n/0.1/resources/schema/all.json")
 	viper.Set("version.current", v.String())
 	viper.Set("release.workflow.type", workflow)
 

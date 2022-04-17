@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package release
 
 import (
@@ -32,23 +33,21 @@ import (
 )
 
 type MultiBranchWorkflow struct {
-	BranchFormat        string `json:"branch_format,omitempty"`
-	BranchExpression    string `json:"branch_expression,omitempty"`
 	UpdateMessageFormat string `json:"update_message_format,omitempty"`
 	BumpMessageFormat   string `json:"bump_message_format,omitempty"`
 }
 
-func (m *MultiBranchWorkflow) PreRelease(r *git.Repository, v version.Version) error {
+func (mbw *MultiBranchWorkflow) PreRelease(r *git.Repository, v version.Version) error {
 	rbs := BranchFormatter(v)
 
 	if !r.HasBranch(rbs) {
-		return fmt.Errorf("branch %s does not exist", rbs)
+		return fmt.Errorf("missing branch %s", rbs)
 	}
 
 	err := r.Checkout(rbs)
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to checkout branch")
 	}
 
 	err = version.Set(v)
@@ -63,7 +62,7 @@ func (m *MultiBranchWorkflow) PreRelease(r *git.Repository, v version.Version) e
 		return errors.Wrap(err, "failed to get signature")
 	}
 
-	message := version.Replace(m.UpdateMessageFormat, v)
+	message := version.Replace(mbw.UpdateMessageFormat, v)
 
 	err = r.Commit(sig, message)
 
@@ -74,7 +73,37 @@ func (m *MultiBranchWorkflow) PreRelease(r *git.Repository, v version.Version) e
 	return nil
 }
 
-func (m *MultiBranchWorkflow) PostRelease(r *git.Repository, v version.Version) error {
+func (mbw *MultiBranchWorkflow) Release(r *git.Repository, v version.Version) error {
+	err := mbw.PreRelease(r, v)
+
+	if err != nil {
+		return errors.Wrap(err, "failed to pre-release")
+	}
+
+	tn := TagFormatter(v)
+
+	currentRevision, err := r.RevParse("HEAD")
+
+	if err != nil {
+		return errors.Wrap(err, "failed to get current revision")
+	}
+
+	err = r.CreateTag(tn, currentRevision)
+
+	if err != nil {
+		return errors.Wrap(err, "failed to create tag")
+	}
+
+	err = mbw.PostRelease(r, v)
+
+	if err != nil {
+		return errors.Wrap(err, "failed to post-release")
+	}
+
+	return nil
+}
+
+func (mbw *MultiBranchWorkflow) PostRelease(r *git.Repository, v version.Version) error {
 	v.Patch++
 	v.Prerelease = []string{"DEV"}
 
@@ -90,7 +119,7 @@ func (m *MultiBranchWorkflow) PostRelease(r *git.Repository, v version.Version) 
 		return errors.Wrap(err, "failed to get signature")
 	}
 
-	message := version.Replace(m.BumpMessageFormat, v)
+	message := version.Replace(mbw.BumpMessageFormat, v)
 
 	err = r.Commit(sig, message)
 

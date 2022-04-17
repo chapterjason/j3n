@@ -23,8 +23,6 @@
 package release
 
 import (
-	"fmt"
-
 	"github.com/gogs/git-module"
 	"github.com/pkg/errors"
 
@@ -39,38 +37,8 @@ func Release(r *git.Repository, v version.Version, wf Workflow) error {
 	tn := TagFormatter(v)
 
 	if r.HasTag(tn) {
-		return errors.Wrap(ErrAlreadyReleased, fmt.Sprintf("tag %s already exists", v))
+		return ErrAlreadyReleased
 	}
 
-	return doRelease(r, v, wf)
-}
-
-func doRelease(r *git.Repository, v version.Version, wf Workflow) error {
-	err := wf.PreRelease(r, v)
-
-	if err != nil {
-		return err
-	}
-
-	tn := TagFormatter(v)
-
-	currentRevision, err := r.RevParse("HEAD")
-
-	if err != nil {
-		return err
-	}
-
-	err = r.CreateTag(tn, currentRevision)
-
-	if err != nil {
-		return err
-	}
-
-	err = wf.PostRelease(r, v)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return wf.Release(r, v)
 }

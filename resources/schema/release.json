@@ -8,13 +8,6 @@
           "type": "string",
           "const": "multi_branch"
         },
-        "branch_format": {
-          "type": "string"
-        },
-        "branch_expression": {
-          "type": "string",
-          "format": "regex"
-        },
         "update_message_format": {
           "type": "string"
         },

@@ -28,8 +28,6 @@ import (
 	"github.com/chapterjason/j3n/mod/version"
 )
 
-type TagFormatterFunc = func(v version.Version) string
-
 var (
 	TagFormatter = func(v version.Version) string {
 		return fmt.Sprintf("v%d.%d.%d", v.Major, v.Minor, v.Patch)

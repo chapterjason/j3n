@@ -35,9 +35,9 @@
         "directories": [
           "./cmd"
         ],
-        "expression": "j3n\\/release\\/\\d+\\.\\d+\\/resources",
+        "expression": "j3n\\/\\d+\\.\\d+\\/resources",
         "pattern": "init.go",
-        "replacement": "j3n/release/{{VERSION_MAJOR}}.{{VERSION_MINOR}}/resources",
+        "replacement": "j3n/{{VERSION_MAJOR}}.{{VERSION_MINOR}}/resources",
         "type": "expression"
       }
     ]

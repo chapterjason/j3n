@@ -30,5 +30,6 @@ import (
 
 type Workflow interface {
 	PreRelease(r *git.Repository, v version.Version) error
+	Release(r *git.Repository, v version.Version) error
 	PostRelease(r *git.Repository, v version.Version) error
 }
