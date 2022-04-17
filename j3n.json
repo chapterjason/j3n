@@ -1,10 +1,31 @@
 {
   "$schema": "./resources/schema/all.json",
   "actions": {
-    "build": {
+    "go": {
       "steps": {
-        "go": {
-          "output": true,
+        "tidy": {
+          "type": "exec",
+          "params": {
+            "command": "go",
+            "args": [
+              "mod",
+              "tidy"
+            ]
+          }
+        },
+        "fmt": {
+          "type": "exec",
+          "params": {
+            "command": "go",
+            "args": [
+              "fmt"
+            ]
+          }
+        },
+        "build": {
+          "dependencies": [
+            "fmt"
+          ],
           "params": {
             "args": [
               "build",

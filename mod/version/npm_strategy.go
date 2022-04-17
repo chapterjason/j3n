@@ -24,6 +24,7 @@ package version
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -43,6 +44,10 @@ func NewNpmStrategy(directory string) *NpmStrategy {
 	return &NpmStrategy{
 		directory,
 	}
+}
+
+func (ns *NpmStrategy) Log() string {
+	return fmt.Sprintf("NPM: %s", ns.directory)
 }
 
 func (ns *NpmStrategy) Get() ([]Version, error) {

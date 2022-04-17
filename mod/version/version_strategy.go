@@ -23,6 +23,8 @@
 package version
 
 import (
+	"fmt"
+
 	"github.com/spf13/viper"
 )
 
@@ -35,6 +37,13 @@ func NewVersionStrategy(directory string) *VersionStrategy {
 	return &VersionStrategy{
 		directory,
 	}
+}
+
+func (vs *VersionStrategy) Log() string {
+	return fmt.Sprintf(
+		"Version: %s",
+		vs.directory,
+	)
 }
 
 func (vs *VersionStrategy) Get() ([]Version, error) {

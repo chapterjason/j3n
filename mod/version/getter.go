@@ -22,20 +22,11 @@
 
 package version
 
-import (
-	log "github.com/sirupsen/logrus"
+var (
+	Getters = []Getter{}
 )
 
-func Set(v Version) error {
-	for _, setter := range Setters {
-		log.Infof("%s", setter.Log())
-
-		err := setter.Set(v)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+type Getter interface {
+	Get() ([]Version, error)
+	Log() string
 }

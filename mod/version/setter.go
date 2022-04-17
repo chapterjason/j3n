@@ -23,10 +23,10 @@
 package version
 
 var (
-	Strategies = []Strategy{}
+	Setters = []Setter{}
 )
 
-type Strategy interface {
-	Get() ([]Version, error)
+type Setter interface {
 	Set(Version) error
+	Log() string
 }

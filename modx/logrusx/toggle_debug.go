@@ -20,22 +20,25 @@
  * THE SOFTWARE.
  */
 
-package version
+package logrusx
 
 import (
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
-func Set(v Version) error {
-	for _, setter := range Setters {
-		log.Infof("%s", setter.Log())
+var Debug bool
 
-		err := setter.Set(v)
+func ToggleDebug(cmd *cobra.Command, _ []string) {
+	if Debug {
+		logrus.SetLevel(logrus.DebugLevel)
+		logrus.SetFormatter(&logrus.TextFormatter{})
+	} else {
+		plainFormatter := new(PlainFormatter)
 
-		if err != nil {
-			return err
-		}
+		logrus.SetLevel(logrus.InfoLevel)
+		logrus.SetFormatter(plainFormatter)
 	}
 
-	return nil
+	logrus.SetOutput(cmd.OutOrStdout())
 }

@@ -23,7 +23,11 @@ package cmd
 
 import (
 	"os"
+	"strings"
+	"time"
 
+	"github.com/gogs/git-module"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -56,30 +60,30 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig, initVersionConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./j3n.json)")
 	rootCmd.PersistentFlags().BoolVar(&logrusx.Debug, "debug", false, "verbose logging")
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	cmd := git.NewCommand("rev-parse", "--show-toplevel")
+	b, err := cmd.RunWithTimeout(time.Duration(0))
+
+	if err != nil {
+		if !strings.Contains(err.Error(), "not a git repository") {
+			cobra.CheckErr(err)
+		}
+	} else {
+		dir := strings.TrimSpace(string(b))
+
+		log.Debugf("chdir: %s", dir)
+
+		err := os.Chdir(dir)
+		cobra.CheckErr(err)
+	}
 }
 
-// initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	if cfgFile != "" {
-		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
-		// home, err := os.UserHomeDir()
-		// cobra.CheckErr(err)
-
-		// Search config in home directory with name ".j3n" (without extension).
-		// viper.AddConfigPath(home)
 		viper.AddConfigPath(".")
 		viper.SetConfigType("json")
 		viper.SetConfigName("j3n")

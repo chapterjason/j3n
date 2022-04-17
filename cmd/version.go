@@ -45,27 +45,30 @@ var versionCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(versionCmd)
+}
 
+func initVersionConfig() {
 	wd, err := os.Getwd()
-
-	if err != nil {
-		panic(err)
-	}
+	cobra.CheckErr(err)
 
 	pkgPath := path.Join(wd, "package.json")
 
 	if _, err := os.Stat(pkgPath); err == nil {
-		version.Strategies = append(version.Strategies, version.NewNpmStrategy(wd))
+		strategy := version.NewNpmStrategy(wd)
+
+		version.Setters = append(version.Setters, strategy)
+		version.Getters = append(version.Getters, strategy)
 	}
 
 	j3nPath := path.Join(wd, "j3n.json")
 
 	if _, err := os.Stat(j3nPath); err == nil {
-		version.Strategies = append(version.Strategies, version.NewVersionStrategy(wd))
-	}
-}
+		strategy := version.NewVersionStrategy(wd)
 
-func initVersionConfig() {
+		version.Setters = append(version.Setters, strategy)
+		version.Getters = append(version.Getters, strategy)
+	}
+
 	sv := viper.Get("version.strategies")
 
 	if sv != nil {
@@ -87,13 +90,14 @@ func initVersionConfig() {
 				err := viperx.Transcode(strategy, &ns)
 				cobra.CheckErr(err)
 
-				version.Strategies = append(version.Strategies, &ns)
+				version.Setters = append(version.Setters, &ns)
+				version.Getters = append(version.Getters, &ns)
 			case "expression":
 				es := version.ExpressionStrategy{}
 				err := viperx.Transcode(strategy, &es)
 				cobra.CheckErr(err)
 
-				version.Strategies = append(version.Strategies, &es)
+				version.Setters = append(version.Setters, &es)
 			default:
 				cobra.CheckErr(ErrUnknownStrategy)
 			}

@@ -19,11 +19,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package cmd
 
 import (
-	"fmt"
-
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/chapterjason/j3n/mod/version"
@@ -41,14 +41,7 @@ var versionSetCmd = &cobra.Command{
 			return err
 		}
 
-		prev, err := version.Get()
-
-		if err != nil {
-			return err
-		}
-
-		fmt.Fprintln(cmd.OutOrStdout(), "Previous version:", prev.String())
-		fmt.Fprintln(cmd.OutOrStdout(), "Next version:", next.String())
+		log.Infof("Setting version to %s", next)
 
 		err = version.Set(next)
 

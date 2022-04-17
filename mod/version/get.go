@@ -24,6 +24,7 @@ package version
 
 import (
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/chapterjason/j3n/modx/slicex"
 )
@@ -36,8 +37,10 @@ func Get() (Version, error) {
 	versions := []Version{}
 	stringers := []slicex.Stringer{}
 
-	for _, strategy := range Strategies {
-		vs, err := strategy.Get()
+	for _, getter := range Getters {
+		log.Debugf("%s", getter.Log())
+
+		vs, err := getter.Get()
 
 		if err != nil {
 			return Version{}, err

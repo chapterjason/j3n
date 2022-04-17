@@ -29,6 +29,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/chapterjason/j3n/modx/regexpx"
 )
@@ -38,6 +39,16 @@ type ExpressionStrategy struct {
 	Pattern     string   `json:"pattern"`
 	Expression  string   `json:"expression"`
 	Replacement string   `json:"replacement"`
+}
+
+func (es *ExpressionStrategy) Log() string {
+	return fmt.Sprintf(
+		"Expression(%s -> %s): %s -> %s",
+		strings.Join(es.Directories, ", "),
+		es.Pattern,
+		es.Expression,
+		es.Replacement,
+	)
 }
 
 func (es *ExpressionStrategy) GetExpression() *regexp.Regexp {
