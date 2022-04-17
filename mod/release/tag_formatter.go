@@ -25,20 +25,13 @@ package release
 import (
 	"fmt"
 
-	"github.com/go-git/go-git/v5"
-
 	"github.com/chapterjason/j3n/mod/version"
-	"github.com/chapterjason/j3n/modx/gitx"
 )
 
-type GitTagFormatterFunc = func(v version.Version) string
+type TagFormatterFunc = func(v version.Version) string
 
 var (
-	GitTagFormatter = func(v version.Version) string {
+	TagFormatter = func(v version.Version) string {
 		return fmt.Sprintf("v%d.%d.%d", v.Major, v.Minor, v.Patch)
 	}
 )
-
-func HasTag(r *git.Repository, v version.Version) (bool, error) {
-	return gitx.HasTag(r, GitTagFormatter(v))
-}

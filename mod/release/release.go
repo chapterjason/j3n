@@ -25,7 +25,7 @@ package release
 import (
 	"fmt"
 
-	"github.com/go-git/go-git/v5"
+	"github.com/gogs/git-module"
 	"github.com/pkg/errors"
 
 	"github.com/chapterjason/j3n/mod/version"
@@ -36,47 +36,37 @@ var (
 )
 
 func Release(r *git.Repository, v version.Version, wf Workflow) error {
-	has, err := HasTag(r, v)
+	tn := TagFormatter(v)
 
-	if err != nil {
-		return errors.Wrap(err, "failed to check if tag exists")
-	}
-
-	if has {
+	if r.HasTag(tn) {
 		return errors.Wrap(ErrAlreadyReleased, fmt.Sprintf("tag %s already exists", v))
 	}
 
-	if v.Patch != 0 {
-		return doRelease(r, v, wf, ReleaseTypePatch)
-	} else if v.Minor != 0 {
-		return doRelease(r, v, wf, ReleaseTypeMinor)
-	} else {
-		return doRelease(r, v, wf, ReleaseTypeMajor)
-	}
+	return doRelease(r, v, wf)
 }
 
-func doRelease(r *git.Repository, v version.Version, wf Workflow, rt ReleaseType) error {
-	err := wf.PreRelease(r, v, rt)
+func doRelease(r *git.Repository, v version.Version, wf Workflow) error {
+	err := wf.PreRelease(r, v)
 
 	if err != nil {
 		return err
 	}
 
-	h, err := r.Head()
+	tn := TagFormatter(v)
+
+	currentRevision, err := r.RevParse("HEAD")
 
 	if err != nil {
 		return err
 	}
 
-	tn := GitTagFormatter(v)
-
-	_, err = r.CreateTag(tn, h.Hash(), nil)
+	err = r.CreateTag(tn, currentRevision)
 
 	if err != nil {
 		return err
 	}
 
-	err = wf.PostRelease(r, v, rt)
+	err = wf.PostRelease(r, v)
 
 	if err != nil {
 		return err

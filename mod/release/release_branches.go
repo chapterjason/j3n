@@ -29,17 +29,12 @@ import (
 )
 
 var (
-	GitReleaseBranchFormat     = "release/{{VERSION_MAJOR}}.{{VERSION_MINOR}}"
-	GitReleaseBranchExpression = "^release/\\d+\\.\\d+$"
-
-	GitReleaseBranchFormatter = func(v version.Version) string {
-		return version.Replace(GitReleaseBranchFormat, v)
+	BranchFormat     = "release/{{VERSION_MAJOR}}.{{VERSION_MINOR}}"
+	BranchExpression = "^release/\\d+\\.\\d+$"
+	BranchFormatter  = func(v version.Version) string {
+		return version.Replace(BranchFormat, v)
 	}
-	GitReleaseBranchMatcher = func(s string) bool {
-		return regexp.MustCompile(GitReleaseBranchExpression).MatchString(s)
+	BranchMatcher = func(s string) bool {
+		return regexp.MustCompile(BranchExpression).MatchString(s)
 	}
 )
-
-func IsReleaseBranch(name string) bool {
-	return GitReleaseBranchMatcher(name)
-}

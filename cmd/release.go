@@ -24,7 +24,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/go-git/go-git/v5"
+	"github.com/gogs/git-module"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -59,7 +59,7 @@ var releaseCmd = &cobra.Command{
 			return err
 		}
 
-		repo, err := git.PlainOpen(wd)
+		repo, err := git.Open(wd)
 
 		if err != nil {
 			return err

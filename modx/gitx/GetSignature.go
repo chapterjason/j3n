@@ -23,30 +23,33 @@
 package gitx
 
 import (
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
+	"time"
 
-	"github.com/chapterjason/j3n/modx/slicex"
+	"github.com/gogs/git-module"
 )
 
-func HasTag(repo *git.Repository, s string) (bool, error) {
-	tags := []string{}
+func GetSignature(r *git.Repository) (*git.Signature, error) {
+	sig := &git.Signature{}
 
-	tagIter, err := repo.Tags()
+	cmd := git.NewCommand("config", "--get", "user.name")
+
+	b, err := cmd.RunInDirWithTimeout(time.Duration(0), r.Path())
 
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	tagIter.ForEach(
-		func(r *plumbing.Reference) error {
-			if r.Name().IsTag() {
-				tags = append(tags, r.Name().Short())
-			}
+	sig.Name = string(b)
 
-			return nil
-		},
-	)
+	cmd = git.NewCommand("config", "--get", "user.email")
 
-	return slicex.Contains(tags, s), nil
+	b, err = cmd.RunInDirWithTimeout(time.Duration(0), r.Path())
+
+	if err != nil {
+		return nil, err
+	}
+
+	sig.Email = string(b)
+
+	return sig, nil
 }

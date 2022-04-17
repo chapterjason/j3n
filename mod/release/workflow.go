@@ -23,12 +23,12 @@
 package release
 
 import (
-	"github.com/go-git/go-git/v5"
+	"github.com/gogs/git-module"
 
 	"github.com/chapterjason/j3n/mod/version"
 )
 
 type Workflow interface {
-	PreRelease(r *git.Repository, v version.Version, rt ReleaseType) error
-	PostRelease(r *git.Repository, v version.Version, rt ReleaseType) error
+	PreRelease(r *git.Repository, v version.Version) error
+	PostRelease(r *git.Repository, v version.Version) error
 }

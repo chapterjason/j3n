@@ -19,16 +19,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package release
 
 import (
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/config"
-	"github.com/go-git/go-git/v5/plumbing"
+	"fmt"
+
+	"github.com/gogs/git-module"
 	"github.com/pkg/errors"
 
 	"github.com/chapterjason/j3n/mod/version"
+	"github.com/chapterjason/j3n/modx/gitx"
 )
 
 type MultiBranchWorkflow struct {
@@ -38,56 +38,17 @@ type MultiBranchWorkflow struct {
 	BumpMessageFormat   string `json:"bump_message_format,omitempty"`
 }
 
-func (m *MultiBranchWorkflow) PreRelease(r *git.Repository, v version.Version, rt ReleaseType) error {
-	if rt == ReleaseTypePatch {
-		return m.preReleasePatch(r, v)
-	} else if rt == ReleaseTypeMinor {
-		return m.preReleaseMinor(r, v)
-	} else if rt == ReleaseTypeMajor {
-		return m.preReleaseMajor(r, v)
+func (m *MultiBranchWorkflow) PreRelease(r *git.Repository, v version.Version) error {
+	rbs := BranchFormatter(v)
+
+	if !r.HasBranch(rbs) {
+		return fmt.Errorf("branch %s does not exist", rbs)
 	}
 
-	return nil
-}
-
-func (m *MultiBranchWorkflow) PostRelease(r *git.Repository, v version.Version, rt ReleaseType) error {
-	if rt == ReleaseTypePatch {
-		return m.postReleasePatch(r, v)
-	} else if rt == ReleaseTypeMinor {
-		return m.postReleaseMinor(r, v)
-	} else if rt == ReleaseTypeMajor {
-		return m.postReleaseMajor(r, v)
-	}
-
-	return nil
-}
-
-// preReleasePatch checkout the release branch, update version, and commit
-func (m *MultiBranchWorkflow) preReleasePatch(r *git.Repository, v version.Version) error {
-	rbs := GitReleaseBranchFormatter(v)
-
-	b, err := r.Branch(rbs)
+	err := r.Checkout(rbs)
 
 	if err != nil {
-		return errors.Wrap(err, "failed to get release branch")
-	}
-
-	w, err := r.Worktree()
-
-	if err != nil {
-		return errors.Wrap(err, "failed to get worktree")
-	}
-
-	err = w.Checkout(
-		&git.CheckoutOptions{
-			Branch: b.Merge,
-			Keep:   true,
-			Force:  false,
-		},
-	)
-
-	if err != nil {
-		return errors.Wrap(err, "failed to checkout release branch")
+		return err
 	}
 
 	err = version.Set(v)
@@ -96,114 +57,46 @@ func (m *MultiBranchWorkflow) preReleasePatch(r *git.Repository, v version.Versi
 		return errors.Wrap(err, "failed to set version")
 	}
 
-	_, err = w.Commit(
-		version.Replace(m.UpdateMessageFormat, v),
-		&git.CommitOptions{
-			All: true,
-		},
-	)
+	sig, err := gitx.GetSignature(r)
 
 	if err != nil {
-		return errors.Wrap(err, "failed to commit update")
+		return errors.Wrap(err, "failed to get signature")
+	}
+
+	message := version.Replace(m.UpdateMessageFormat, v)
+
+	err = r.Commit(sig, message)
+
+	if err != nil {
+		return errors.Wrap(err, "failed to commit")
 	}
 
 	return nil
 }
 
-// preReleaseMinor bump version, and commit
-func (m *MultiBranchWorkflow) postReleasePatch(r *git.Repository, v version.Version) error {
-	w, err := r.Worktree()
-
-	if err != nil {
-		return errors.Wrap(err, "failed to get worktree")
-	}
-
+func (m *MultiBranchWorkflow) PostRelease(r *git.Repository, v version.Version) error {
 	v.Patch++
 	v.Prerelease = []string{"DEV"}
 
-	err = version.Set(v)
+	err := version.Set(v)
 
 	if err != nil {
 		return errors.Wrap(err, "failed to set version")
 	}
 
-	_, err = w.Commit(
-		version.Replace(m.BumpMessageFormat, v),
-		&git.CommitOptions{
-			All: true,
-		},
-	)
+	sig, err := gitx.GetSignature(r)
 
 	if err != nil {
-		return errors.Wrap(err, "failed to commit update")
+		return errors.Wrap(err, "failed to get signature")
+	}
+
+	message := version.Replace(m.BumpMessageFormat, v)
+
+	err = r.Commit(sig, message)
+
+	if err != nil {
+		return errors.Wrap(err, "failed to commit")
 	}
 
 	return nil
-}
-
-func (m *MultiBranchWorkflow) preReleaseMinor(r *git.Repository, v version.Version) error {
-	rbs := GitReleaseBranchFormatter(v)
-
-	_, err := r.Branch(rbs)
-
-	if err != nil {
-		if errors.Is(err, git.ErrBranchNotFound) {
-			h, err := r.Head()
-
-			if err != nil {
-				return errors.Wrap(err, "failed to get head")
-			}
-
-			ref := plumbing.NewHashReference(plumbing.NewBranchReferenceName(rbs), h.Hash())
-
-			err = r.Storer.SetReference(ref)
-
-			if err != nil {
-				return errors.Wrap(err, "failed to set reference")
-			}
-
-			err = r.CreateBranch(
-				&config.Branch{
-					Name:  rbs,
-					Merge: ref.Name(),
-				},
-			)
-
-			if err != nil {
-				return err
-			}
-
-			w, err := r.Worktree()
-
-			if err != nil {
-				return errors.Wrap(err, "failed to get worktree")
-			}
-
-			err = w.Checkout(
-				&git.CheckoutOptions{
-					Branch: ref.Name(),
-				},
-			)
-
-			if err != nil {
-				return errors.Wrap(err, "failed to checkout branch")
-			}
-		} else {
-			return errors.Wrap(err, "failed to get branch")
-		}
-	}
-
-	return m.preReleasePatch(r, v)
-}
-
-func (m *MultiBranchWorkflow) postReleaseMinor(r *git.Repository, v version.Version) error {
-	return m.postReleasePatch(r, v)
-}
-
-func (m *MultiBranchWorkflow) preReleaseMajor(r *git.Repository, v version.Version) error {
-	panic("implement me")
-}
-
-func (m *MultiBranchWorkflow) postReleaseMajor(r *git.Repository, v version.Version) error {
-	panic("implement me")
 }
