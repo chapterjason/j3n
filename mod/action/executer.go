@@ -24,108 +24,193 @@ package action
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/chapterjason/j3n/mod/topology"
 )
 
+var ErrOutputNotFound = errors.New("output not found")
+
 type Executer struct {
-	m       *Map
-	outputs map[string]any
+	list    *List
+	storage map[string]any
 }
 
-func NewExecuter(m *Map) *Executer {
+func NewExecuter(list *List) *Executer {
 	return &Executer{
-		m:       m,
-		outputs: make(map[string]any),
+		list:    list,
+		storage: make(map[string]any),
 	}
 }
 
-func (r *Executer) hasOutput(ref reference) bool {
-	_, ok := r.outputs[ref.String()]
+func (e *Executer) Execute(actionName string) (map[string]map[string]error, error) {
+	if _, ok := e.list.Actions[actionName]; !ok {
+		return nil, fmt.Errorf("action %s not found", actionName)
+	}
 
-	return ok
+	ldg := e.list.GetGraph()
+
+	if ldg.IsCyclic() {
+		return nil, errors.New("cyclic dependency detected")
+	}
+
+	adg := topology.NewDependencyGraph()
+	adg.Add(ldg, actionName)
+
+	results := map[string]map[string]error{}
+
+	for items := range adg.Iterate() {
+		wg := sync.WaitGroup{}
+
+		actionNames := []string{}
+
+		for _, item := range items {
+			wg.Add(1)
+
+			actionNames = append(actionNames, item)
+
+			go func(actionName string) {
+				if ers := e.ExecuteAction(actionName); ers != nil {
+					results[actionName] = ers
+				}
+
+				wg.Done()
+			}(item)
+		}
+
+		wg.Wait()
+
+		ers := map[string]map[string]error{}
+
+		for _, actionName := range actionNames {
+			for outputName, err := range results[actionName] {
+				if ers[actionName] == nil {
+					ers[actionName] = map[string]error{}
+				}
+
+				ers[actionName][outputName] = err
+			}
+		}
+
+		if len(ers) > 0 {
+			return ers, nil
+		}
+	}
+
+	return nil, nil
 }
 
-func (r *Executer) Execute(s string) error {
-	ep := newExecutionPlan(r.m)
-	err := ep.plan(s)
-
-	if err != nil {
-		return errors.Wrapf(err, "failed to plan execution of %s", s)
-	}
-
-	for _, ref := range ep.refs {
-		action := r.m.MustGetAction(ref.action)
-		step := action.MustGetStep(ref.step)
-
-		err := r.executeStep(ref, step)
-
-		if err != nil {
-			return errors.Wrapf(err, "failed to execute step %s", ref.String())
-		}
-	}
-
-	return nil
-}
-
-func (r *Executer) executeStep(ref reference, s *Step) error {
-	var input any
-
-	if s.Input != "" {
-		inputRef, err := resolveReference(s.Input, ref.action)
-
-		if err != nil {
-			return errors.Wrapf(err, "failed to resolve input reference %s", s.Input)
-		}
-
-		if !r.hasOutput(inputRef) {
-			return fmt.Errorf("input %s not found", s.Input)
-		}
-
-		input = r.mustGetOutput(inputRef)
-	}
-
-	sr, ok := Steps[s.Type]
-
-	if !ok {
-		return fmt.Errorf("no runner for step type %s", s.Type)
-	}
-
-	fmt.Printf("Step: %s\n", ref.String())
-
-	out, err := sr(input, s.Params)
+func (e *Executer) ExecuteStep(action *Action, stepName string) error {
+	step, err := action.GetStep(stepName)
 
 	if err != nil {
 		return err
 	}
 
-	if s.Output {
+	log.Infof("executing step %s", stepName)
+
+	var input any
+
+	if step.Input != "" {
+		var err error
+
+		input, err = e.GetOutput(step.Input)
+
+		if err != nil {
+			return errors.Wrapf(err, "failed to get input %s", step.Input)
+		}
+	}
+
+	stepRunner, ok := Steps[step.Type]
+
+	if !ok {
+		return fmt.Errorf("no runner for step %s and type %s", stepName, step.Type)
+	}
+
+	out, err := stepRunner(input, step.Params)
+
+	if err != nil {
+		return err
+	}
+
+	if step.Output != "" {
 		if out == nil {
-			return fmt.Errorf("output of step %s is nil", ref.String())
+			return fmt.Errorf("output of step %s is nil", stepName)
 		}
 
-		r.outputs[ref.String()] = out
+		e.storage[step.Output] = out
 	}
+
+	log.Debugf("step %s executed", stepName)
 
 	return nil
 }
 
-func (r *Executer) getOutput(ref reference) (any, error) {
-	rs := ref.String()
+func (e *Executer) GetOutput(key string) (any, error) {
+	v, ok := e.storage[key]
 
-	if !r.hasOutput(ref) {
-		return nil, fmt.Errorf("output %s not found", rs)
+	if !ok {
+		return nil, ErrOutputNotFound
 	}
 
-	return r.outputs[rs], nil
+	return v, nil
 }
 
-func (r *Executer) mustGetOutput(ref reference) any {
-	out, err := r.getOutput(ref)
+func (e *Executer) ExecuteAction(actionName string) map[string]error {
+	log.Infof("executing action %s", actionName)
+
+	action, err := e.list.GetAction(actionName)
 
 	if err != nil {
-		panic(err)
+		return map[string]error{actionName: err}
 	}
 
-	return out
+	sdg := action.GetGraph()
+
+	if sdg.IsCyclic() {
+		return map[string]error{actionName: errors.New("cyclic dependency")}
+	}
+
+	results := map[string]error{}
+
+	for items := range sdg.Iterate() {
+		wg := sync.WaitGroup{}
+
+		stepNames := []string{}
+
+		for _, item := range items {
+			wg.Add(1)
+
+			stepNames = append(stepNames, item)
+
+			go func(action *Action, stepName string) {
+				if err := e.ExecuteStep(action, stepName); err != nil {
+					results[stepName] = err
+				}
+
+				wg.Done()
+			}(action, item)
+		}
+
+		wg.Wait()
+
+		ers := map[string]error{}
+
+		for _, stepName := range stepNames {
+			if err, ok := results[stepName]; ok {
+				ers[stepName] = err
+			}
+		}
+
+		if len(ers) > 0 {
+			return ers
+		}
+	}
+
+	log.Debugf("action %s executed", actionName)
+
+	return nil
 }

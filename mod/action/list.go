@@ -23,56 +23,41 @@
 package action
 
 import (
-	"strings"
+	"errors"
 
-	"github.com/pkg/errors"
+	"github.com/chapterjason/j3n/mod/topology"
 )
 
-var (
-	ReferenceSeparator  = "."
-	ErrInvalidReference = errors.New("invalid reference")
-)
+var ErrActionNotFound = errors.New("action not found")
 
-type reference struct {
-	action string
-	step   string
+type List struct {
+	Actions map[string]*Action `json:"actions" yaml:"actions"`
 }
 
-func newReference(action string, step string) reference {
-	return reference{
-		action: action,
-		step:   step,
-	}
+func (l *List) HasAction(actionName string) bool {
+	_, ok := l.Actions[actionName]
+
+	return ok
 }
 
-func parseReference(ref string) (reference, error) {
-	parts := strings.Split(ref, ReferenceSeparator)
-
-	if len(parts) != 2 {
-		return reference{}, ErrInvalidReference
+func (l *List) GetAction(actionName string) (*Action, error) {
+	if !l.HasAction(actionName) {
+		return nil, ErrActionNotFound
 	}
 
-	return newReference(parts[0], parts[1]), nil
+	return l.Actions[actionName], nil
 }
 
-func resolveReference(s string, action string) (reference, error) {
-	if strings.Contains(s, ReferenceSeparator) {
-		ref, err := parseReference(s)
+func (l *List) GetGraph() *topology.DependencyGraph {
+	graph := topology.NewDependencyGraph()
 
-		if err != nil {
-			return reference{}, err
+	for actionName, action := range l.Actions {
+		graph.AddNode(actionName)
+
+		for _, dep := range action.Dependencies {
+			graph.AddEdge(actionName, dep)
 		}
-
-		return ref, nil
-	} else {
-		return newReference(action, s), nil
 	}
-}
 
-func (r *reference) String() string {
-	return r.action + ReferenceSeparator + r.step
-}
-
-func (r *reference) compare(other reference) bool {
-	return r.action == other.action && r.step == other.step
+	return graph
 }

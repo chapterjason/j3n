@@ -29,7 +29,7 @@ import (
 var (
 	Steps = map[string]StepFunc{}
 
-	ErrStepRunnerAlreadyRegistered = errors.New("step runner already registered")
+	ErrStepRunnerAlreadyRegistered = errors.New("StepName runner already registered")
 )
 
 type StepFunc = func(input any, params map[string]any) (any, error)

@@ -25,6 +25,7 @@ package cmd
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -44,20 +45,28 @@ var actionCmd = &cobra.Command{
 			return fmt.Errorf("no actions defined")
 		}
 
-		var m action.Map
+		var l action.List
 
-		err := viperx.Transcode(as, &m)
+		err := viperx.Transcode(as, &l)
 
 		if err != nil {
 			return err
 		}
 
-		ep := action.NewExecuter(&m)
+		ep := action.NewExecuter(&l)
 
-		err = ep.Execute(args[0])
+		ers, err := ep.Execute(args[0])
 
 		if err != nil {
 			return err
+		}
+
+		if len(ers) > 0 {
+			for actionName, er := range ers {
+				for stepName, err := range er {
+					log.Errorf("action(%s): step(%s): %s", actionName, stepName, err)
+				}
+			}
 		}
 
 		return nil

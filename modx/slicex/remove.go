@@ -20,43 +20,18 @@
  * THE SOFTWARE.
  */
 
-package action
+package slicex
 
-import (
-	"github.com/pkg/errors"
+func Remove(items any, item any) []any {
+	result := []any{}
 
-	"github.com/chapterjason/j3n/mod/topology"
-)
+	it := ToAny(items)
 
-var (
-	ErrStepNotFound = errors.New("step not found")
-)
-
-type Action struct {
-	Dependencies []string         `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
-	Steps        map[string]*Step `json:"steps" yaml:"steps"`
-}
-
-func (a *Action) GetStep(step string) (*Step, error) {
-	s, ok := a.Steps[step]
-
-	if !ok {
-		return s, ErrStepNotFound
-	}
-
-	return s, nil
-}
-
-func (a *Action) GetGraph() *topology.DependencyGraph {
-	graph := topology.NewDependencyGraph()
-
-	for stepName, step := range a.Steps {
-		graph.AddNode(stepName)
-
-		for _, dep := range step.Dependencies {
-			graph.AddEdge(stepName, dep)
+	for _, i := range it {
+		if i != item {
+			result = append(result, i)
 		}
 	}
 
-	return graph
+	return result
 }

@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package cmd
 
 import (
@@ -41,6 +42,7 @@ var rootCmd = &cobra.Command{
 	Use:              "j3n",
 	PersistentPreRun: logrusx.ToggleDebug,
 	SilenceUsage:     true,
+	SilenceErrors:    true,
 	Short:            "Enhances your development experience",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
@@ -53,6 +55,7 @@ func Execute() {
 	err := rootCmd.Execute()
 
 	if err != nil {
+		log.Errorf("Error: %s", err)
 		os.Exit(1)
 	}
 }

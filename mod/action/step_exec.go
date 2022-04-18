@@ -111,7 +111,12 @@ func init() {
 				exitCode := cmd.ProcessState.ExitCode()
 
 				if !slicex.Contains(ignoreExitCodes, float64(exitCode)) && !continueOnError {
-					return nil, errors.Wrap(err, "failed to run command")
+					message := fmt.Sprintf("command \"%s\" failed\n", cmd.String())
+					message += fmt.Sprintf("    exit code: %d\n", exitCode)
+					message += fmt.Sprintf("    stderr: %s\n", strings.TrimSpace(stderr.String()))
+					message += fmt.Sprintf("    stdout: %s\n", strings.TrimSpace(stdout.String()))
+
+					return nil, errors.New(message)
 				}
 			}
 

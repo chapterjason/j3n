@@ -20,36 +20,10 @@
  * THE SOFTWARE.
  */
 
-package action
+package slicex
 
-import (
-	"fmt"
-)
+func RemoveString(items []string, item string) []string {
+	it := Remove(items, item)
 
-type Map struct {
-	Actions map[string]*Action `json:"actions"`
-}
-
-func (am *Map) HasAction(action string) bool {
-	_, ok := am.Actions[action]
-
-	return ok
-}
-
-func (am *Map) GetAction(action string) (*Action, error) {
-	if !am.HasAction(action) {
-		return nil, fmt.Errorf("action %s not found", action)
-	}
-
-	return am.Actions[action], nil
-}
-
-func (am *Map) MustGetAction(name string) *Action {
-	action, err := am.GetAction(name)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return action
+	return ToString(it)
 }

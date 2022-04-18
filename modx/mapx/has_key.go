@@ -20,43 +20,9 @@
  * THE SOFTWARE.
  */
 
-package action
+package mapx
 
-import (
-	"github.com/pkg/errors"
-
-	"github.com/chapterjason/j3n/mod/topology"
-)
-
-var (
-	ErrStepNotFound = errors.New("step not found")
-)
-
-type Action struct {
-	Dependencies []string         `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
-	Steps        map[string]*Step `json:"steps" yaml:"steps"`
-}
-
-func (a *Action) GetStep(step string) (*Step, error) {
-	s, ok := a.Steps[step]
-
-	if !ok {
-		return s, ErrStepNotFound
-	}
-
-	return s, nil
-}
-
-func (a *Action) GetGraph() *topology.DependencyGraph {
-	graph := topology.NewDependencyGraph()
-
-	for stepName, step := range a.Steps {
-		graph.AddNode(stepName)
-
-		for _, dep := range step.Dependencies {
-			graph.AddEdge(stepName, dep)
-		}
-	}
-
-	return graph
+func HasKey[T string | bool](m map[string]T, key string) bool {
+	_, ok := m[key]
+	return ok
 }

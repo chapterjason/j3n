@@ -22,8 +22,10 @@
 
 package slicex
 
-func Contains[T string | int | float64](s []T, e T) bool {
-	for _, a := range s {
+func Contains(s any, e any) bool {
+	items := ToAny(s)
+
+	for _, a := range items {
 		if a == e {
 			return true
 		}

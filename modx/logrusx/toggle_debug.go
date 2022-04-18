@@ -23,6 +23,8 @@
 package logrusx
 
 import (
+	"time"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -32,7 +34,12 @@ var Debug bool
 func ToggleDebug(cmd *cobra.Command, _ []string) {
 	if Debug {
 		logrus.SetLevel(logrus.DebugLevel)
-		logrus.SetFormatter(&logrus.TextFormatter{})
+		logrus.SetFormatter(
+			&logrus.TextFormatter{
+				FullTimestamp:   true,
+				TimestampFormat: time.RFC3339Nano,
+			},
+		)
 	} else {
 		plainFormatter := new(PlainFormatter)
 
