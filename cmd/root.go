@@ -60,6 +60,10 @@ func Execute() {
 	}
 }
 
+func GetRootCmd() *cobra.Command {
+	return rootCmd
+}
+
 func init() {
 	cobra.OnInitialize(initConfig, initVersionConfig)
 
