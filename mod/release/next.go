@@ -23,19 +23,18 @@
 package release
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gogs/git-module"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/chapterjason/j3n/mod/version"
+	"github.com/chapterjason/j3n/modx/gitx"
 )
 
-var (
-	ErrAlreadyReleased = errors.New("already released")
-)
-
-func Release(r *git.Repository, v version.Version, wf Workflow) error {
+func Next(r *git.Repository, cv version.Version, nv version.Version, workflow Workflow) error {
 	cmd := git.NewCommand("status", "--porcelain")
 
 	b, err := cmd.RunWithTimeout(time.Duration(0))
@@ -48,11 +47,61 @@ func Release(r *git.Repository, v version.Version, wf Workflow) error {
 		return errors.New("uncommitted changes")
 	}
 
-	tn := TagFormatter(v)
+	log.Infof("Current version: %s", cv)
+	log.Infof("Next version: %s", nv)
 
-	if r.HasTag(tn) {
-		return ErrAlreadyReleased
+	bbs := BranchFormatter(cv)
+	rbs := BranchFormatter(nv)
+
+	if !r.HasBranch(bbs) {
+		return fmt.Errorf("missing base branch: %s", bbs)
 	}
 
-	return wf.Release(r, v)
+	if r.HasBranch(rbs) {
+		return fmt.Errorf("branch already exists: %s", rbs)
+	}
+
+	err = r.Checkout(
+		rbs, git.CheckoutOptions{
+			BaseBranch: bbs,
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Release branch created: %s", rbs)
+
+	err = version.Set(nv)
+
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Version set to: %s", nv)
+
+	s, err := gitx.GetSignature(r)
+
+	if err != nil {
+		return err
+	}
+
+	err = r.Add(git.AddOptions{All: true})
+
+	if err != nil {
+		return err
+	}
+
+	message := version.Replace(workflow.GetBumpMessageFormat(), nv)
+
+	err = r.Commit(s, message)
+
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Bumped version: %s", nv)
+
+	return nil
 }

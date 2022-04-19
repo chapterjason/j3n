@@ -37,6 +37,14 @@ type MultiBranchWorkflow struct {
 	BumpMessageFormat   string `json:"bump_message_format,omitempty"`
 }
 
+func (mbw *MultiBranchWorkflow) GetUpdateMessageFormat() string {
+	return mbw.UpdateMessageFormat
+}
+
+func (mbw *MultiBranchWorkflow) GetBumpMessageFormat() string {
+	return mbw.BumpMessageFormat
+}
+
 func (mbw *MultiBranchWorkflow) PreRelease(r *git.Repository, v version.Version) error {
 	rbs := BranchFormatter(v)
 
