@@ -23,34 +23,12 @@
 package release
 
 import (
-	"regexp"
-
 	"github.com/chapterjason/j3n/mod/version"
-	"github.com/chapterjason/j3n/modx/regexpx"
-	"github.com/chapterjason/j3n/modx/strconvx"
 )
 
 var (
-	BranchFormat     = "{{VERSION_MAJOR}}.{{VERSION_MINOR}}"
-	BranchExpression = "^(?<major>\\d+)\\.(?P<minor>\\d+)$"
-	BranchFormatter  = func(v version.Version) string {
-		return version.Replace(BranchFormat, v)
-	}
-	BranchMatcher = func(s string) bool {
-		return regexp.MustCompile(BranchExpression).MatchString(s)
-	}
-	BranchVersionExtractor = func(s string) (version.Version, error) {
-		expr := regexp.MustCompile(BranchExpression)
-		groups, err := regexpx.MatchNamed(expr, s)
-
-		if err != nil {
-			return version.Version{}, err
-		}
-
-		return version.Version{
-			Major: strconvx.MustParseUint(groups["major"]),
-			Minor: strconvx.MustParseUint(groups["minor"]),
-			Patch: 0,
-		}, nil
+	DefaultBranchFormat    = "{{VERSION_MAJOR}}.{{VERSION_MINOR}}"
+	DefaultBranchFormatter = func(v version.Version) string {
+		return version.Replace(DefaultBranchFormat, v)
 	}
 )

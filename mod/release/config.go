@@ -51,6 +51,15 @@ func (d *Config) UnmarshalJSON(data []byte) error {
 	switch tp {
 	case "multi_branch":
 		d.Workflow = &MultiBranchWorkflow{
+			BranchFormat:        DefaultBranchFormat,
+			TagFormat:           DefaultTagFormat,
+			UpdateMessageFormat: "Update version for {{VERSION}}",
+			BumpMessageFormat:   "Bump version to {{VERSION}}",
+		}
+	case "single_branch":
+		d.Workflow = &SingleBranchWorkflow{
+			Branch:              "master",
+			TagFormat:           DefaultTagFormat,
 			UpdateMessageFormat: "Update version for {{VERSION}}",
 			BumpMessageFormat:   "Bump version to {{VERSION}}",
 		}

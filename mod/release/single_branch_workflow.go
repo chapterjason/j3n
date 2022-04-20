@@ -24,6 +24,7 @@ package release
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gogs/git-module"
 	"github.com/pkg/errors"
@@ -32,31 +33,31 @@ import (
 	"github.com/chapterjason/j3n/modx/gitx"
 )
 
-type MultiBranchWorkflow struct {
-	BranchFormat        string `json:"branch_format,omitempty"`
+type SingleBranchWorkflow struct {
+	Branch              string `json:"branch,omitempty"`
 	TagFormat           string `json:"tag_format,omitempty"`
 	UpdateMessageFormat string `json:"update_message_format,omitempty"`
 	BumpMessageFormat   string `json:"bump_message_format,omitempty"`
 }
 
-func (mbw *MultiBranchWorkflow) GetUpdateMessageFormat() string {
-	return mbw.UpdateMessageFormat
+func (sbw *SingleBranchWorkflow) GetUpdateMessageFormat() string {
+	return sbw.UpdateMessageFormat
 }
 
-func (mbw *MultiBranchWorkflow) GetBumpMessageFormat() string {
-	return mbw.BumpMessageFormat
+func (sbw *SingleBranchWorkflow) GetBumpMessageFormat() string {
+	return sbw.BumpMessageFormat
 }
 
-func (mbw *MultiBranchWorkflow) GetBranch(v version.Version) string {
-	return version.Replace(mbw.BranchFormat, v)
+func (sbw *SingleBranchWorkflow) GetBranch(_ version.Version) string {
+	return sbw.Branch
 }
 
-func (mbw *MultiBranchWorkflow) GetTag(v version.Version) string {
-	return version.Replace(mbw.TagFormat, v)
+func (sbw *SingleBranchWorkflow) GetTag(v version.Version) string {
+	return version.Replace(sbw.TagFormat, v)
 }
 
-func (mbw *MultiBranchWorkflow) PreRelease(r *git.Repository, v version.Version) error {
-	rbs := mbw.GetBranch(v)
+func (sbw *SingleBranchWorkflow) PreRelease(r *git.Repository, v version.Version) error {
+	rbs := sbw.GetBranch(v)
 
 	if !r.HasBranch(rbs) {
 		return fmt.Errorf("missing branch %s", rbs)
@@ -80,7 +81,7 @@ func (mbw *MultiBranchWorkflow) PreRelease(r *git.Repository, v version.Version)
 		return errors.Wrap(err, "failed to get signature")
 	}
 
-	message := version.Replace(mbw.UpdateMessageFormat, v)
+	message := version.Replace(sbw.UpdateMessageFormat, v)
 
 	err = r.Commit(sig, message)
 
@@ -91,14 +92,32 @@ func (mbw *MultiBranchWorkflow) PreRelease(r *git.Repository, v version.Version)
 	return nil
 }
 
-func (mbw *MultiBranchWorkflow) Release(r *git.Repository, v version.Version) error {
-	err := mbw.PreRelease(r, v)
+func (sbw *SingleBranchWorkflow) Release(r *git.Repository, v version.Version) error {
+	tags, err := r.Tags()
+
+	if err != nil {
+		return errors.Wrap(err, "failed to get tags")
+	}
+
+	for _, tag := range tags {
+		tagVersion, err := version.Parse(strings.TrimPrefix(tag, "v"))
+
+		if err != nil {
+			return errors.Wrap(err, "failed to parse tag")
+		}
+
+		if tagVersion.Compare(v) > 0 {
+			return fmt.Errorf("tag %s is higher than version %s", tag, v)
+		}
+	}
+
+	err = sbw.PreRelease(r, v)
 
 	if err != nil {
 		return errors.Wrap(err, "failed to pre-release")
 	}
 
-	tn := mbw.GetTag(v)
+	tn := sbw.GetTag(v)
 
 	currentRevision, err := r.RevParse("HEAD")
 
@@ -112,7 +131,7 @@ func (mbw *MultiBranchWorkflow) Release(r *git.Repository, v version.Version) er
 		return errors.Wrap(err, "failed to create tag")
 	}
 
-	err = mbw.PostRelease(r, v)
+	err = sbw.PostRelease(r, v)
 
 	if err != nil {
 		return errors.Wrap(err, "failed to post-release")
@@ -121,7 +140,7 @@ func (mbw *MultiBranchWorkflow) Release(r *git.Repository, v version.Version) er
 	return nil
 }
 
-func (mbw *MultiBranchWorkflow) PostRelease(r *git.Repository, v version.Version) error {
+func (sbw *SingleBranchWorkflow) PostRelease(r *git.Repository, v version.Version) error {
 	v.Patch++
 	v.Prerelease = []string{"DEV"}
 
@@ -137,7 +156,7 @@ func (mbw *MultiBranchWorkflow) PostRelease(r *git.Repository, v version.Version
 		return errors.Wrap(err, "failed to get signature")
 	}
 
-	message := version.Replace(mbw.BumpMessageFormat, v)
+	message := version.Replace(sbw.BumpMessageFormat, v)
 
 	err = r.Commit(sig, message)
 

@@ -50,8 +50,8 @@ func Next(r *git.Repository, cv version.Version, nv version.Version, workflow Wo
 	log.Infof("Current version: %s", cv)
 	log.Infof("Next version: %s", nv)
 
-	bbs := BranchFormatter(cv)
-	rbs := BranchFormatter(nv)
+	bbs := workflow.GetBranch(cv)
+	rbs := workflow.GetBranch(nv)
 
 	if !r.HasBranch(bbs) {
 		return fmt.Errorf("missing base branch: %s", bbs)

@@ -36,6 +36,19 @@ func Replace(p string, v Version) string {
 	p = strings.ReplaceAll(p, "{{VERSION_PRERELEASE}}", strings.Join(v.Prerelease, "."))
 	p = strings.ReplaceAll(p, "{{VERSION_BUILD}}", strings.Join(v.Build, "."))
 	p = strings.ReplaceAll(p, "{{VERSION}}", v.String())
+	p = strings.ReplaceAll(p, "{{VERSION_CORE}}", fmt.Sprintf("%d.%d.%d", v.Major, v.Minor, v.Patch))
+
+	if len(v.Prerelease) > 0 {
+		p = strings.ReplaceAll(p, "{{-VERSION_PRERELEASE}}", "-"+strings.Join(v.Prerelease, "."))
+	} else {
+		p = strings.ReplaceAll(p, "{{-VERSION_PRERELEASE}}", "")
+	}
+
+	if len(v.Build) > 0 {
+		p = strings.ReplaceAll(p, "{{+VERSION_BUILD}}", "+"+strings.Join(v.Build, "."))
+	} else {
+		p = strings.ReplaceAll(p, "{{+VERSION_BUILD}}", "")
+	}
 
 	// time
 	now := time.Now()

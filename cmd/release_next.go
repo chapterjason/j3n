@@ -60,6 +60,12 @@ var releaseNextCmd = &cobra.Command{
 			return err
 		}
 
+		_, isMulti := rc.Workflow.(*release.MultiBranchWorkflow)
+
+		if !isMulti {
+			return errors.New(cmd.Use + " requires a multi-branch workflow")
+		}
+
 		var v version.Version
 		var err error
 		vf := cmd.Flag("version")

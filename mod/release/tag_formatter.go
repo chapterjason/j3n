@@ -22,14 +22,6 @@
 
 package release
 
-import (
-	"fmt"
-
-	"github.com/chapterjason/j3n/mod/version"
-)
-
 var (
-	TagFormatter = func(v version.Version) string {
-		return fmt.Sprintf("v%d.%d.%d", v.Major, v.Minor, v.Patch)
-	}
+	DefaultTagFormat = "v{{VERSION_CORE}}{{-VERSION_PRERELEASE}}"
 )

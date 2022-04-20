@@ -48,7 +48,7 @@ func Release(r *git.Repository, v version.Version, wf Workflow) error {
 		return errors.New("uncommitted changes")
 	}
 
-	tn := TagFormatter(v)
+	tn := wf.GetTag(v)
 
 	if r.HasTag(tn) {
 		return ErrAlreadyReleased

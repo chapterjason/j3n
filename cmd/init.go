@@ -34,6 +34,7 @@ import (
 	"github.com/chapterjason/j3n/mod/release"
 	"github.com/chapterjason/j3n/mod/version"
 	"github.com/chapterjason/j3n/modx/gitx"
+	"github.com/chapterjason/j3n/modx/slicex"
 )
 
 var (
@@ -70,8 +71,8 @@ var initCmd = &cobra.Command{
 func initProject(directory string, workflow string) error {
 	v := version.MustParse("0.1.0-DEV")
 
-	if workflow != "multi_branch" {
-		return errors.New("only multi_branch workflow is supported")
+	if slicex.Contains([]string{"multi_branch", "single_branch"}, workflow) {
+		return errors.New("only single_branch or multi_branch workflow is supported")
 	}
 
 	if directory == "" {
@@ -168,7 +169,7 @@ func initProject(directory string, workflow string) error {
 		return errors.Wrap(err, "failed to get branches")
 	}
 
-	rbs := release.BranchFormatter(v)
+	rbs := release.DefaultBranchFormatter(v)
 
 	err = r.Checkout(rbs, git.CheckoutOptions{BaseBranch: headRevision})
 

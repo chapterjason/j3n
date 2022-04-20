@@ -32,6 +32,9 @@ type Workflow interface {
 	GetUpdateMessageFormat() string
 	GetBumpMessageFormat() string
 
+	GetTag(v version.Version) string
+	GetBranch(v version.Version) string
+
 	PreRelease(r *git.Repository, v version.Version) error
 	Release(r *git.Repository, v version.Version) error
 	PostRelease(r *git.Repository, v version.Version) error
