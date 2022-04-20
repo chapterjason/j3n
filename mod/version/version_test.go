@@ -144,3 +144,137 @@ func TestClone(t *testing.T) {
 		},
 	)
 }
+
+func Test_comparePrereleasePart(t *testing.T) {
+	tests := []struct {
+		name string
+		spp  string
+		opp  string
+		want int
+	}{
+		{
+			name: "equal",
+			spp:  "alpha",
+			opp:  "alpha",
+			want: 0,
+		},
+		{
+			name: "larger ascii",
+			spp:  "alpha",
+			opp:  "beta",
+			want: -1,
+		},
+		{
+			name: "smaller ascii",
+			spp:  "beta",
+			opp:  "alpha",
+			want: 1,
+		},
+		{
+			name: "equal integer",
+			spp:  "1",
+			opp:  "1",
+			want: 0,
+		},
+		{
+			name: "larger by integer",
+			spp:  "1",
+			opp:  "0",
+			want: 1,
+		},
+		{
+			name: "lower by integer",
+			spp:  "0",
+			opp:  "1",
+			want: -1,
+		},
+		{
+			name: "empty vs string",
+			spp:  "",
+			opp:  "beta",
+			want: -1,
+		},
+		{
+			name: "empty vs empty",
+			spp:  "",
+			opp:  "",
+			want: 0,
+		},
+		{
+			name: "string vs empty",
+			spp:  "beta",
+			opp:  "",
+			want: 1,
+		},
+		{
+			name: "number vs string",
+			spp:  "1",
+			opp:  "beta",
+			want: -1,
+		},
+		{
+			name: "string vs number",
+			spp:  "beta",
+			opp:  "1",
+			want: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(
+			tt.name, func(t *testing.T) {
+				if got := comparePrereleasePart(tt.spp, tt.opp); got != tt.want {
+					t.Errorf("comparePrereleasePart() = %v, want %v", got, tt.want)
+				}
+			},
+		)
+	}
+}
+
+func Test_comparePrerelease(t *testing.T) {
+	vs := []string{
+		"1.0.0-alpha",      // 00
+		"1.0.0-alpha.1",    // 01
+		"1.0.0-alpha.beta", // 02
+		"1.0.0-beta",       // 03
+		"1.0.0-beta.2",     // 04
+		"1.0.0-beta.11",    // 05
+		"1.0.0-rc.1",       // 06
+		"1.0.0",            // 07
+	}
+
+	type ts struct {
+		name string
+		v    Version
+		v2   Version
+		want int
+	}
+
+	tests := []ts{}
+
+	for i, vsi := range vs {
+		if i == 0 {
+			continue
+		}
+
+		if i != len(vs) {
+			tests = append(
+				tests, ts{
+					name: "",
+					want: -1,
+					v:    MustParse(vs[i-1]),
+					v2:   MustParse(vsi),
+				},
+			)
+		}
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name, func(t *testing.T) {
+				if got := comparePrerelease(tt.v, tt.v2); got != tt.want {
+					t.Errorf("comparePrerelease() = %v, want %v, compared %s with %s", got, tt.want, tt.v, tt.v2)
+				}
+			},
+		)
+	}
+}
